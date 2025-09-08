@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: b2b-admin-portal
+    env: node
+    buildCommand: npm install
+    startCommand: npm run dev
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXTAUTH_URL
+        value: https://your-app-name.onrender.com
+      - key: NEXTAUTH_SECRET
+        value: your-secret-key-here

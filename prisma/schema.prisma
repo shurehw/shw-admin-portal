@@ -1,0 +1,494 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model B2BCustomer {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  password          String
+  companyName       String
+  taxId             String?
+  firstName         String
+  lastName          String
+  phone             String?
+  customerGroupId   Int      @default(1)
+  bigcommerceId     Int?     @unique
+  isApproved        Boolean  @default(false)
+  creditLimit       Float    @default(0)
+  paymentTerms      String   @default("NET30")
+  salesRepId        String?
+  salesRep          SalesRep? @relation(fields: [salesRepId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  addresses         Address[]
+  quotes            Quote[]
+  savedCarts        SavedCart[]
+  priceRules        CustomPriceRule[]
+  favorites         FavoriteList[]
+  companyUsers      CompanyUser[]
+  orders            Order[]
+  customOrders      CustomOrder[]
+  tickets           Ticket[]
+}
+
+model CompanyUser {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  email           String      @unique
+  password        String
+  firstName       String
+  lastName        String
+  role            String      @default("buyer") // admin, buyer, approver, accounting, viewer
+  department      String?     // sales, accounting, operations, warehouse, etc.
+  spendingLimit   Float?
+  canCreateOrders Boolean     @default(true)
+  canApproveOrders Boolean    @default(false)
+  canViewPricing  Boolean     @default(true)
+  canManageUsers  Boolean     @default(false)
+  isActive        Boolean     @default(true)
+  lastLogin       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model SalesRep {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  commissionRate  Float       @default(0.05) // 5% default
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  customers       B2BCustomer[]
+  activities      SalesActivity[]
+}
+
+model SalesActivity {
+  id              String      @id @default(cuid())
+  salesRepId      String
+  salesRep        SalesRep    @relation(fields: [salesRepId], references: [id])
+  type            String      // call, email, meeting, quote, order
+  description     String
+  customerId      String?
+  orderValue      Float?
+  createdAt       DateTime    @default(now())
+}
+
+model FavoriteList {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  name            String      @default("My Favorites")
+  items           Json        // Array of product IDs with notes
+  isDefault       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@unique([customerId, name])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  orderNumber     String      @unique
+  status          String      @default("pending")
+  items           Json
+  subtotal        Float
+  tax             Float       @default(0)
+  shipping        Float       @default(0)
+  total           Float
+  paymentMethod   String
+  paymentStatus   String      @default("pending")
+  shippingAddress Json
+  billingAddress  Json
+  notes           String?
+  poNumber        String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  tickets         Ticket[]
+}
+
+model Address {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  type            String      @default("shipping")
+  firstName       String
+  lastName        String
+  company         String?
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String
+  postalCode      String
+  country         String      @default("US")
+  phone           String?
+  isDefault       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Quote {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  quoteNumber     String      @unique
+  status          String      @default("draft")
+  items           Json
+  subtotal        Float
+  tax             Float       @default(0)
+  shipping        Float       @default(0)
+  total           Float
+  validUntil      DateTime
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  tickets         Ticket[]
+}
+
+model SavedCart {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  name            String
+  items           Json
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model CustomPriceRule {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        B2BCustomer @relation(fields: [customerId], references: [id])
+  productId       Int
+  sku             String?
+  price           Float
+  minQuantity     Int         @default(1)
+  maxQuantity     Int?
+  discountType    String      @default("fixed")
+  discountAmount  Float       @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@unique([customerId, productId, minQuantity])
+}
+
+model CustomOrder {
+  id                String      @id @default(cuid())
+  orderId           String      @unique
+  customerId        String
+  customer          B2BCustomer @relation(fields: [customerId], references: [id])
+  
+  // Order Details
+  productName       String
+  sku              String?
+  quantity          Int
+  customDetails     String?     // JSON string with custom specifications
+  specialInstructions String?
+  
+  // Status & Tracking
+  status            String      @default("pending") // pending, confirmed, in_production, quality_check, shipping, delivered
+  currentStage      String?     // More detailed stage within status
+  estimatedCompletion Int?      // Days until completion
+  
+  // Timeline
+  orderDate         DateTime    @default(now())
+  confirmedDate     DateTime?
+  productionStart   DateTime?
+  productionEnd     DateTime?
+  shippedDate       DateTime?
+  estimatedDelivery DateTime?
+  actualDelivery    DateTime?
+  
+  // Tracking Information
+  trackingNumber    String?
+  carrier           String?     // UPS, FedEx, USPS, etc.
+  trackingUrl       String?
+  
+  // Production Details
+  manufacturer      String?
+  productionNotes   String?
+  qualityCheckNotes String?
+  artworkStatus     String?     // pending, approved, revision_needed
+  
+  // Files & Attachments
+  designFiles       String?     // JSON array of file URLs
+  proofImages       String?     // JSON array of proof image URLs
+  artworkFiles      String?     // JSON array of artwork URLs
+  
+  // Communication
+  lastUpdate        String?
+  internalNotes     String?
+  customerNotes     String?
+  
+  // Updates & History
+  statusHistory     CustomOrderStatusHistory[]
+  tickets           Ticket[]
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([customerId])
+  @@index([orderId])
+  @@index([status])
+}
+
+model CustomOrderStatusHistory {
+  id              String      @id @default(cuid())
+  customOrderId   String
+  customOrder     CustomOrder @relation(fields: [customOrderId], references: [id])
+  
+  previousStatus  String
+  newStatus       String
+  notes           String?
+  updatedBy       String?     // Admin user who made the update
+  isCustomerVisible Boolean   @default(true)
+  
+  // Optional milestone data
+  milestoneType   String?     // design_approved, production_started, quality_passed, etc.
+  attachments     String?     // JSON array of file URLs
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([customOrderId])
+}
+
+// Ticketing System Models
+
+model Ticket {
+  id                String      @id @default(cuid())
+  orgId             String
+  companyId         String?
+  company           B2BCustomer? @relation(fields: [companyId], references: [id])
+  contactId         String?     // CompanyUser id
+  orderId           String?
+  order             Order?      @relation(fields: [orderId], references: [id])
+  quoteId           String?
+  quote             Quote?      @relation(fields: [quoteId], references: [id])
+  customOrderId     String?
+  customOrder       CustomOrder? @relation(fields: [customOrderId], references: [id])
+  
+  type              String      // support, delivery, billing, quality, return, other
+  status            String      // new, ack, in_progress, waiting_customer, closed
+  priority          String      // low, normal, high, urgent
+  channel           String      // email, web, sms, phone, internal
+  
+  subject           String
+  body              String
+  ownerId           String?     // assigned agent
+  team              String?
+  
+  slaId             String?
+  slaPolicy         SlaPolicy?  @relation(fields: [slaId], references: [id])
+  slaDue            DateTime?
+  firstResponseAt   DateTime?
+  closedAt          DateTime?
+  
+  messageThreadId   String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  // Relations
+  messages          TicketMessage[]
+  watchers          TicketWatcher[]
+  
+  @@index([orgId])
+  @@index([status, priority, slaDue])
+  @@index([ownerId])
+  @@index([team])
+  @@index([companyId])
+  @@index([orderId])
+  @@index([quoteId])
+}
+
+model TicketMessage {
+  id                String      @id @default(cuid())
+  ticketId          String
+  ticket            Ticket      @relation(fields: [ticketId], references: [id])
+  
+  kind              String      // public_reply, internal_note
+  channel           String      // email, sms, phone, internal, system
+  body              String
+  html              String?
+  attachments       Json?       // array of file attachments
+  
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  
+  // Email specific
+  emailMessageId    String?
+  emailReferences   Json?       // array of message IDs for threading
+  
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model TicketWatcher {
+  ticketId          String
+  ticket            Ticket      @relation(fields: [ticketId], references: [id])
+  userId            String
+  
+  @@id([ticketId, userId])
+}
+
+model TicketStatus {
+  id                String      @id @default(cuid())
+  name              String
+  orderIndex        Int
+  isDefault         Boolean     @default(false)
+  isClosed          Boolean     @default(false)
+  color             String?     // hex color for UI
+  
+  @@unique([orderIndex])
+}
+
+model TicketType {
+  id                String      @id @default(cuid())
+  name              String      @unique
+  description       String?
+  defaultTeam       String?
+  defaultPriority   String      @default("normal")
+  
+  @@index([name])
+}
+
+model Priority {
+  id                String      @id @default(cuid())
+  name              String      @unique
+  orderIndex        Int
+  color             String?     // hex color for UI
+  
+  @@unique([orderIndex])
+}
+
+model SlaPolicy {
+  id                      String      @id @default(cuid())
+  name                    String
+  priority                String
+  firstResponseMinutes    Int         // SLA for first response
+  resolveMinutes          Int         // SLA for resolution
+  businessHoursId         String?
+  businessHours           BusinessHours? @relation(fields: [businessHoursId], references: [id])
+  
+  tickets                 Ticket[]
+  
+  @@index([priority])
+}
+
+model BusinessHours {
+  id                String      @id @default(cuid())
+  name              String
+  timezone          String
+  
+  // Business hours for each day (JSON format: { start: "09:00", end: "17:00" } or null for closed)
+  monday            Json?
+  tuesday           Json?
+  wednesday         Json?
+  thursday          Json?
+  friday            Json?
+  saturday          Json?
+  sunday            Json?
+  
+  slaPolicies       SlaPolicy[]
+  
+  @@unique([name])
+}
+
+model Macro {
+  id                String      @id @default(cuid())
+  name              String
+  description       String?
+  team              String?     // null for global macros
+  actions           Json        // array of actions: set_status, add_note, send_email, etc.
+  
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([team])
+}
+
+model EmailIdentity {
+  id                String      @id @default(cuid())
+  team              String
+  fromName          String
+  fromEmail         String
+  signature         String?
+  isDefault         Boolean     @default(false)
+  
+  @@unique([team, fromEmail])
+}
+
+model Integration {
+  id                String      @id @default(cuid())
+  kind              String      // email, twilio, slack, webhook
+  name              String
+  config            Json        // encrypted configuration
+  isActive          Boolean     @default(true)
+  
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([kind])
+}
+
+model RoutingRule {
+  id                String      @id @default(cuid())
+  name              String
+  conditions        Json        // condition builder JSON
+  actions           Json        // assign_team, set_priority, etc.
+  orderIndex        Int
+  isActive          Boolean     @default(true)
+  
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@unique([orderIndex])
+}
+
+model SavedView {
+  id                String      @id @default(cuid())
+  name              String
+  filters           Json        // filter configuration
+  team              String?     // null for personal views
+  userId            String?     // null for team views
+  isPublic          Boolean     @default(false)
+  
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([team])
+  @@index([userId])
+}
+
+model TicketEvent {
+  id                String      @id @default(cuid())
+  ticketId          String
+  eventType         String      // created, status_changed, assigned, closed, etc.
+  data              Json        // event-specific data
+  userId            String?     // who triggered the event
+  
+  createdAt         DateTime    @default(now())
+  
+  @@index([ticketId])
+  @@index([eventType])
+  @@index([createdAt])
+}

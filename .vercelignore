@@ -1,0 +1,4 @@
+# Only exclude temporary or build files
+.next
+node_modules
+*.log
