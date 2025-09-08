@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { db } from '@/lib/firebase'
 import { supabase } from '@/lib/supabase'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy } from 'firebase/firestore'
-import { ChevronDown, ChevronRight, Plus, Edit2, Trash2, Copy, Upload, Download, Search, Filter, Grid, List, DollarSign, Package, RefreshCw, Database } from 'lucide-react'
+import { collection, getDocs, doc, query, where, orderBy } from 'firebase/firestore'
+import { ChevronDown, ChevronRight, Copy, Upload, Download, Search, Filter, Grid, List, DollarSign, Package, RefreshCw, Database } from 'lucide-react'
 
 interface Supplier {
   id?: string
@@ -579,7 +579,7 @@ export default function CustomCatalogPage() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Custom Product Catalog</h1>
+        <h1 className="text-2xl font-bold">Custom Product Catalog (View Only)</h1>
         <div className="flex gap-2 items-center">
           {loadingSupabase && (
             <div className="flex items-center text-blue-600">
@@ -701,17 +701,18 @@ export default function CustomCatalogPage() {
                   <List size={20} />
                 </button>
               </div>
-              <button
+              {/* Product editing disabled - View only mode */}
+              {/* <button
                 onClick={() => setShowForm(true)}
                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
               >
                 Add Product
-              </button>
+              </button> */}
             </div>
           </div>
 
-          {/* Product Form Modal */}
-          {showForm && (
+          {/* Product Form Modal - DISABLED */}
+          {false && showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
               <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
                 <h2 className="text-xl font-semibold mb-4">
@@ -1020,37 +1021,8 @@ export default function CustomCatalogPage() {
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEdit(product)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Edit"
-                            >
-                              <Edit2 size={18} />
-                            </button>
-                            <button
-                              onClick={() => handleDuplicate(product)}
-                              className="text-green-600 hover:text-green-900"
-                              title="Duplicate"
-                            >
-                              <Copy size={18} />
-                            </button>
-                            {product.source === 'supabase' ? (
-                              <button
-                                onClick={() => syncProductToFirebase(product)}
-                                className="text-purple-600 hover:text-purple-900"
-                                title="Sync to Firebase"
-                              >
-                                <Database size={18} />
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => product.id && handleDelete(product.id)}
-                                className="text-red-600 hover:text-red-900"
-                                title="Delete"
-                              >
-                                <Trash2 size={18} />
-                              </button>
-                            )}
+                            {/* Actions disabled - View only mode */}
+                            <span className="text-gray-400">View Only</span>
                           </div>
                         </td>
                       </tr>
@@ -1176,36 +1148,8 @@ export default function CustomCatalogPage() {
                       </span>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="flex-1 bg-blue-600 text-white py-1 rounded text-sm hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDuplicate(product)}
-                        className="p-1 text-green-600 hover:text-green-800"
-                        title="Duplicate"
-                      >
-                        <Copy size={18} />
-                      </button>
-                      {product.source === 'supabase' ? (
-                        <button
-                          onClick={() => syncProductToFirebase(product)}
-                          className="p-1 text-purple-600 hover:text-purple-800"
-                          title="Sync"
-                        >
-                          <Database size={18} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => product.id && handleDelete(product.id)}
-                          className="p-1 text-red-600 hover:text-red-800"
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
+                      {/* Actions disabled - View only mode */}
+                      <span className="text-sm text-gray-400">View Only</span>
                     </div>
                   </div>
                 </div>
@@ -1218,16 +1162,17 @@ export default function CustomCatalogPage() {
       {activeTab === 'suppliers' && (
         <>
           <div className="mb-4">
-            <button
+            {/* Supplier editing disabled - View only mode */}
+            {/* <button
               onClick={() => setShowSupplierForm(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Add Supplier
-            </button>
+            </button> */}
           </div>
 
-          {/* Supplier Form Modal */}
-          {showSupplierForm && (
+          {/* Supplier Form Modal - DISABLED */}
+          {false && showSupplierForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 max-w-md w-full">
                 <h2 className="text-xl font-semibold mb-4">
