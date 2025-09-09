@@ -26,7 +26,7 @@ interface PendingInvite {
   email: string;
   role: string;
   status: string;
-  created_at: string;
+  invited_at: string;
 }
 
 export default function UsersPage() {
@@ -431,7 +431,7 @@ export default function UsersPage() {
                     {getRoleBadge(invite.role).label}
                   </span>
                   <span className="text-xs text-gray-500">
-                    Invited {new Date(invite.created_at).toLocaleDateString()}
+                    Invited {new Date(invite.invited_at).toLocaleDateString()}
                   </span>
                 </div>
                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">

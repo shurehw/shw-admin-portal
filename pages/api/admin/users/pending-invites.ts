@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('pending_invites')
       .select('*')
       .eq('status', 'pending')
-      .order('created_at', { ascending: false });
+      .order('invited_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching pending invites:', error);
