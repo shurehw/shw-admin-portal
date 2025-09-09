@@ -31,7 +31,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.error(`Database error for ${invite.email}:`, error);
+        } else if (data) {
+          console.log(`Successfully saved invite for ${invite.email}`, data);
+          
           // Send invite email using Supabase Auth
           const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
             invite.email,
