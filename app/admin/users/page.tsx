@@ -16,9 +16,10 @@ interface UserType {
   role: 'admin' | 'sales_rep' | 'customer_service' | 'production' | 'art_team' | 'viewer';
   department?: string;
   phone?: string;
-  status: 'active' | 'inactive' | 'suspended';
+  status: 'active' | 'inactive' | 'suspended' | 'pending';
   created_at: string;
   last_sign_in_at?: string;
+  isPendingInvite?: boolean;
 }
 
 interface PendingInvite {
@@ -100,7 +101,24 @@ export default function UsersPage() {
   };
 
   const filterUsers = () => {
-    let filtered = [...users];
+    // Combine users and pending invites
+    const allUsers = [
+      ...users,
+      ...pendingInvites.map(invite => ({
+        id: `invite-${invite.id}`,
+        email: invite.email,
+        full_name: undefined,
+        role: invite.role as UserType['role'],
+        department: undefined,
+        phone: undefined,
+        status: 'pending' as UserType['status'],
+        created_at: invite.invited_at,
+        last_sign_in_at: undefined,
+        isPendingInvite: true
+      }))
+    ];
+
+    let filtered = [...allUsers];
 
     if (searchTerm) {
       filtered = filtered.filter(user =>
@@ -225,6 +243,49 @@ export default function UsersPage() {
     }
   };
 
+  const handleResendInvite = async (email: string) => {
+    try {
+      const response = await fetch('/api/admin/users/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        alert(`Invite resent to ${email}`);
+      } else {
+        const error = await response.json();
+        alert(`Error resending invite: ${error.error}`);
+      }
+    } catch (error) {
+      alert('Error resending invite');
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    if (!confirm('Are you sure you want to cancel this invite?')) return;
+
+    try {
+      // Extract the actual invite ID from the prefixed ID
+      const actualId = inviteId.replace('invite-', '');
+      
+      const response = await fetch(`/api/admin/users/cancel-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteId: actualId }),
+      });
+
+      if (response.ok) {
+        alert('Invite cancelled');
+        loadPendingInvites();
+      } else {
+        alert('Error cancelling invite');
+      }
+    } catch (error) {
+      alert('Error cancelling invite');
+    }
+  };
+
   const handleResetPassword = async (userId: string) => {
     if (!isAdmin) {
       alert('Only administrators can reset passwords');
@@ -300,6 +361,8 @@ export default function UsersPage() {
         return { icon: XCircle, color: 'text-gray-600', bg: 'bg-gray-100' };
       case 'suspended':
         return { icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'pending':
+        return { icon: Mail, color: 'text-yellow-600', bg: 'bg-yellow-100' };
       default:
         return { icon: AlertCircle, color: 'text-gray-600', bg: 'bg-gray-100' };
     }
@@ -400,6 +463,7 @@ export default function UsersPage() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
+              <option value="pending">Pending Invite</option>
             </select>
           </div>
           <div className="flex items-center gap-4">
@@ -414,34 +478,6 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
-
-      {/* Pending Invites */}
-      {pendingInvites.length > 0 && (
-        <div className="bg-yellow-50 rounded-lg shadow-sm p-4 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <Mail className="h-5 w-5 text-yellow-600" />
-            Pending Invitations
-          </h3>
-          <div className="space-y-2">
-            {pendingInvites.map((invite) => (
-              <div key={invite.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-yellow-200">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">{invite.email}</span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadge(invite.role).color}`}>
-                    {getRoleBadge(invite.role).label}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    Invited {new Date(invite.invited_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                  Awaiting acceptance
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -531,28 +567,51 @@ export default function UsersPage() {
                     <div className="flex items-center gap-2">
                       {isAdmin && (
                         <>
-                          <button
-                            onClick={() => openEditModal(user)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Edit user"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleResetPassword(user.id)}
-                            className="text-yellow-600 hover:text-yellow-900"
-                            title="Reset password"
-                          >
-                            <Key className="h-4 w-4" />
-                          </button>
-                          {user.id !== currentUser?.id && (
-                            <button
-                              onClick={() => handleDeleteUser(user.id)}
-                              className="text-red-600 hover:text-red-900"
-                              title="Delete user"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                          {user.isPendingInvite ? (
+                            // Actions for pending invites
+                            <>
+                              <button
+                                onClick={() => handleResendInvite(user.email)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Resend invite"
+                              >
+                                <Send className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleCancelInvite(user.id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Cancel invite"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : (
+                            // Actions for existing users
+                            <>
+                              <button
+                                onClick={() => openEditModal(user)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edit user"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleResetPassword(user.id)}
+                                className="text-yellow-600 hover:text-yellow-900"
+                                title="Reset password"
+                              >
+                                <Key className="h-4 w-4" />
+                              </button>
+                              {user.id !== currentUser?.id && (
+                                <button
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Delete user"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </>
                           )}
                         </>
                       )}

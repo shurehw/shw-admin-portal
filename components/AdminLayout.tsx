@@ -33,6 +33,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       { name: 'Dashboard', href: '/admin/dashboard', icon: Home, roles: ['admin', 'sales_rep', 'customer_service', 'production', 'art_team'] },
     ];
     
+    const adminOnlyNav = [
+      { name: 'Users', href: '/admin/users', icon: Users, roles: ['admin'] },
+    ];
+    
     const salesNav = [
       { name: 'CRM', href: '/crm', icon: UserCheck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
@@ -50,11 +54,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     ];
     
     const adminNav = [
-      { name: 'Users', href: '/admin/users', icon: Users, roles: ['admin'] },
       { name: 'Reports', href: '/admin/reports', icon: BarChart3, roles: ['admin'] },
     ];
     
-    const allNav = [...baseNav, ...salesNav, ...productionNav, ...adminNav];
+    const allNav = [...baseNav, ...adminOnlyNav, ...salesNav, ...productionNav, ...adminNav];
     return allNav.filter(item => item.roles.includes(userRole));
   };
 
