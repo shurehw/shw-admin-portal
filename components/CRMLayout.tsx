@@ -26,7 +26,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
 
   const navigation = [
     { name: 'My Day', href: '/crm', icon: Home, capability: null },
-    { name: 'Smart Leads', href: '/crm/leads', icon: Target, capability: 'leads:read' },
+    { name: 'Smart Leads', href: '/crm/leads', icon: Target, capability: null },
     { name: 'Pipeline', href: '/crm/pipeline', icon: Workflow, capability: 'deals:read' },
     { name: 'Contacts', href: '/crm/contacts', icon: Users, capability: 'contacts:read' },
     { name: 'Companies', href: '/crm/companies', icon: Building2, capability: 'companies:read' },

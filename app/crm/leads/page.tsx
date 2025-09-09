@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import CRMLayout from '@/components/CRMLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 import {
   Search, Plus, Filter, TrendingUp, Target, Users, Building2,
   MapPin, DollarSign, Clock, CheckCircle, XCircle, AlertCircle,
@@ -72,7 +73,7 @@ export default function SmartLeadsPage() {
       const intakeRes = await fetch(`/api/crm/leads/intake?status=${filterStatus}`);
       if (intakeRes.ok) {
         const data = await intakeRes.json();
-        setIntakeQueue(data.leads || []);
+        setIntakeQueue(data || []);
       }
 
       // Fetch smart lists
@@ -293,10 +294,16 @@ export default function SmartLeadsPage() {
                 AI-powered lead discovery and scoring for B2B wholesale
               </p>
             </div>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Add Target
-            </button>
+            <div className="flex space-x-3">
+              <Link href="/crm/leads/new" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Add Lead
+              </Link>
+              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Import Leads
+              </button>
+            </div>
           </div>
         </div>
 
