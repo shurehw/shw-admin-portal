@@ -147,6 +147,47 @@ export default function SmartLeadsPage() {
       if (intakeRes.ok) {
         const data = await intakeRes.json();
         setIntakeQueue(data || []);
+        
+        // Auto-enrich leads that don't have Apollo data yet
+        const leadsToEnrich = (data || []).filter((lead: any) => 
+          !lead.raw?.apollo_data && 
+          lead.status === 'pending' &&
+          lead.suggested_company?.name
+        );
+        
+        if (leadsToEnrich.length > 0) {
+          console.log(`Auto-enriching ${leadsToEnrich.length} leads without Apollo data...`);
+          
+          // Enrich in background (don't wait for completion)
+          leadsToEnrich.forEach(async (lead: any, index: number) => {
+            // Stagger requests to avoid rate limiting
+            setTimeout(async () => {
+              try {
+                const enrichResponse = await fetch('/api/crm/leads/apollo-enrich', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    leadId: lead.id,
+                    companyName: lead.suggested_company?.name,
+                    domain: lead.suggested_company?.website
+                  })
+                });
+                
+                if (enrichResponse.ok) {
+                  console.log(`✓ Auto-enriched: ${lead.suggested_company?.name}`);
+                  // Refresh the lead data to show enrichment
+                  const updatedRes = await fetch(`/api/crm/leads/intake?status=${filterStatus}${sourceParam}`);
+                  if (updatedRes.ok) {
+                    const updatedData = await updatedRes.json();
+                    setIntakeQueue(updatedData || []);
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to auto-enrich lead ${lead.id}:`, error);
+              }
+            }, index * 2000); // 2 second delay between enrichments
+          });
+        }
       }
 
       // Fetch smart lists
