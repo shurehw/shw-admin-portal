@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import AdminLayout from '@/components/AdminLayout';
 
 interface UserType {
   id: string;
@@ -72,7 +73,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, roleFilter, statusFilter]);
+  }, [users, pendingInvites, searchTerm, roleFilter, statusFilter]);
 
   const loadUsers = async () => {
     try {
@@ -370,14 +371,17 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="p-6">
+    <AdminLayout>
+      <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
@@ -983,5 +987,6 @@ export default function UsersPage() {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 }
