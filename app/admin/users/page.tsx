@@ -223,7 +223,12 @@ export default function UsersPage() {
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    const isInvite = userId.startsWith('invite-');
+    const confirmMessage = isInvite 
+      ? 'Are you sure you want to cancel this invite?' 
+      : 'Are you sure you want to delete this user? This action cannot be undone.';
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -233,27 +238,34 @@ export default function UsersPage() {
       });
 
       if (response.ok) {
-        setUsers(users.filter(u => u.id !== userId));
-        alert('User deleted successfully');
+        if (isInvite) {
+          loadPendingInvites(); // Reload pending invites
+          alert('Invite cancelled successfully');
+        } else {
+          setUsers(users.filter(u => u.id !== userId));
+          alert('User deleted successfully');
+        }
+        loadUsers(); // Reload the full list
       } else {
         const error = await response.json();
-        alert(`Error deleting user: ${error.error}`);
+        alert(`Error: ${error.error}`);
       }
     } catch (error) {
-      alert('Error deleting user');
+      alert('Error performing action');
     }
   };
 
-  const handleResendInvite = async (email: string) => {
+  const handleResendInvite = async (inviteId: string, email: string) => {
     try {
       const response = await fetch('/api/admin/users/resend-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ inviteId }),
       });
 
       if (response.ok) {
         alert(`Invite resent to ${email}`);
+        loadPendingInvites(); // Reload to show updated timestamp
       } else {
         const error = await response.json();
         alert(`Error resending invite: ${error.error}`);
@@ -575,14 +587,14 @@ export default function UsersPage() {
                             // Actions for pending invites
                             <>
                               <button
-                                onClick={() => handleResendInvite(user.email)}
+                                onClick={() => handleResendInvite(user.id, user.email)}
                                 className="text-blue-600 hover:text-blue-900"
                                 title="Resend invite"
                               >
                                 <Send className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleCancelInvite(user.id)}
+                                onClick={() => handleDeleteUser(user.id)}
                                 className="text-red-600 hover:text-red-900"
                                 title="Cancel invite"
                               >
