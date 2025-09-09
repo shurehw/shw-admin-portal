@@ -45,7 +45,7 @@ export default function AdminLogin() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/admin/setup`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/admin/dashboard`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

@@ -37,8 +37,9 @@ export async function middleware(req: NextRequest) {
     return supabaseResponse
   }
 
-  // Allow the login page and test pages without a session
+  // Allow the login page, setup page, and test pages without a session
   if (pathname.startsWith('/admin/login') || 
+      pathname.startsWith('/admin/setup') ||
       pathname.startsWith('/test-auth') || 
       pathname.startsWith('/admin/auth-debug')) {
     return supabaseResponse
