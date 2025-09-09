@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { supabaseAdmin } from '@/lib/clients/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -7,6 +8,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Require authenticated admin
+    const supabase = createServerSupabaseClient({ req, res });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { data: me } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single();
+    if (me?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
     const { invites } = req.body;
     
     if (!invites || !Array.isArray(invites)) {
@@ -18,7 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (const invite of invites) {
       try {
         // Save to pending_invites table
-        const { data, error } = await supabaseAdmin
+        const admin = supabaseAdmin();
+        const { data, error } = await admin
           .from('pending_invites')
           .upsert({
             email: invite.email.toLowerCase(),

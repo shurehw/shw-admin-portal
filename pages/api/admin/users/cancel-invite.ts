@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabaseAdmin } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { supabaseAdmin } from '@/lib/clients/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -7,6 +8,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Require authenticated admin
+    const supabase = createServerSupabaseClient({ req, res });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return res.status(401).json({ error: 'Unauthorized' });
+    const { data: me } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single();
+    if (me?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+
     const { inviteId } = req.body;
     
     if (!inviteId) {
@@ -14,7 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Delete the pending invite
-    const { error } = await supabaseAdmin
+    const admin = supabaseAdmin();
+    const { error } = await admin
       .from('pending_invites')
       .delete()
       .eq('id', inviteId);

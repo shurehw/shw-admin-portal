@@ -21,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { full_name, role, department, phone, status } = req.body;
 
       // Update profile
-      const { data: profile, error: profileError } = await supabaseAdmin
+      const admin = supabaseAdmin();
+      const { data: profile, error: profileError } = await admin
         .from('user_profiles')
         .update({
           full_name,
@@ -38,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (profileError) throw profileError;
 
       // Update auth user metadata
-      await supabaseAdmin.auth.admin.updateUserById(id as string, {
+      await admin.auth.admin.updateUserById(id as string, {
         user_metadata: {
           full_name,
           role,
@@ -59,7 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'DELETE') {
     try {
       // Delete auth user (will cascade delete profile due to foreign key)
-      const { error } = await supabaseAdmin.auth.admin.deleteUser(id as string);
+      const admin = supabaseAdmin();
+      const { error } = await admin.auth.admin.deleteUser(id as string);
       if (error) throw error;
 
       return res.status(200).json({ success: true });
@@ -76,7 +78,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (action === 'reset-password') {
         // Set new password
-        const { error } = await supabaseAdmin.auth.admin.updateUserById(id as string, {
+        const admin = supabaseAdmin();
+        const { error } = await admin.auth.admin.updateUserById(id as string, {
           password: newPassword,
         });
 
@@ -87,7 +90,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (action === 'send-reset-email') {
         // Get user email
-        const { data: profile } = await supabaseAdmin
+        const admin = supabaseAdmin();
+        const { data: profile } = await admin
           .from('user_profiles')
           .select('email')
           .eq('user_id', id)
@@ -98,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Send password reset email
-        const { error } = await supabaseAdmin.auth.resetPasswordForEmail(profile.email, {
+        const { error } = await admin.auth.resetPasswordForEmail(profile.email, {
           redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin-dashboard-p750a8z28-shureprint.vercel.app'}/admin/reset-password`,
         });
 

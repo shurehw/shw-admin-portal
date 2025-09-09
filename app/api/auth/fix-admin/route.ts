@@ -12,14 +12,15 @@ export async function GET(request: Request) {
     }
 
     // Check if user_profiles table exists
-    const { data: tables } = await supabaseAdmin
+    const admin = supabaseAdmin();
+    const { data: tables } = await admin
       .from('user_profiles')
       .select('*')
       .limit(1);
 
     if (!tables) {
       // Create the user_profiles table if it doesn't exist
-      const { error: createError } = await supabaseAdmin.rpc('exec_sql', {
+      const { error: createError } = await admin.rpc('exec_sql', {
         sql: `
           CREATE TABLE IF NOT EXISTS user_profiles (
             user_id UUID PRIMARY KEY,
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     }
 
     // Get the user by email
-    const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: users } = await admin.auth.admin.listUsers();
     const user = users?.users?.find(u => u.email === email);
     
     if (!user) {
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
     }
 
     // Check if profile exists
-    const { data: existingProfile } = await supabaseAdmin
+    const { data: existingProfile } = await admin
       .from('user_profiles')
       .select('*')
       .eq('user_id', user.id)
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
 
     if (existingProfile) {
       // Update to admin
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await admin
         .from('user_profiles')
         .update({ role: 'admin' })
         .eq('user_id', user.id)
@@ -67,7 +68,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Updated to admin', profile: data });
     } else {
       // Create admin profile
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await admin
         .from('user_profiles')
         .insert({
           user_id: user.id,

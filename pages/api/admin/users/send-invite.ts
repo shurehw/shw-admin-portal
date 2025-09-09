@@ -30,8 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (const invite of invites) {
       try {
+        const admin = supabaseAdmin();
         // Save to pending_invites table
-        const { data, error } = await supabaseAdmin
+        const { data, error } = await admin
           .from('pending_invites')
           .upsert({
             email: invite.email.toLowerCase(),
@@ -49,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log(`Successfully saved invite for ${invite.email}`, data);
           
           // Send invite email using Supabase Auth
-          const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+          const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(
             invite.email,
             {
               data: {

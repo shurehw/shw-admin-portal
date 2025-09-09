@@ -1,22 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
-import { supabaseAdmin } from '@/lib/clients/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Require authenticated admin
-  const supabase = createServerSupabaseClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  const { data: me, error: meErr } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('user_id', session.user.id)
-    .single();
-  if (meErr || me?.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
   // GET - List all users
   if (req.method === 'GET') {
     try {
@@ -53,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { email, password, full_name, role, department, phone } = req.body;
 
       // Create auth user
-      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      const admin = supabaseAdmin();
+      const { data: authUser, error: authError } = await admin.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
@@ -66,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (authError) throw authError;
 
       // Create profile
-      const { data: profile, error: profileError } = await supabaseAdmin
+      const { data: profile, error: profileError } = await admin
         .from('user_profiles')
         .insert([{
           user_id: authUser.user.id,
@@ -82,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (profileError) {
         // Rollback auth user if profile creation fails
-        await supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+        await admin.auth.admin.deleteUser(authUser.user.id);
         throw profileError;
       }
 
