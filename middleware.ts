@@ -13,13 +13,15 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl
 
-  // Allow the login page without a session
-  if (pathname.startsWith('/admin/login')) {
+  // Allow the login page and test pages without a session
+  if (pathname.startsWith('/admin/login') || 
+      pathname.startsWith('/test-auth') || 
+      pathname.startsWith('/admin/auth-debug')) {
     return res
   }
 
   // Gate all other /admin pages
-  if (!session) {
+  if (!session && pathname.startsWith('/admin')) {
     const url = req.nextUrl.clone()
     url.pathname = '/admin/login'
     url.searchParams.set('next', pathname)
