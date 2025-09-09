@@ -295,13 +295,17 @@ export default function SmartLeadsPage() {
               </p>
             </div>
             <div className="flex space-x-3">
+              <Link href="/crm/leads/discover" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Discover Leads
+              </Link>
               <Link href="/crm/leads/new" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
                 <Plus className="h-5 w-5" />
                 Add Lead
               </Link>
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                Import Leads
+                Import CSV
               </button>
             </div>
           </div>
