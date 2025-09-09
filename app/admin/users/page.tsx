@@ -21,11 +21,20 @@ interface UserType {
   last_sign_in_at?: string;
 }
 
+interface PendingInvite {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+}
+
 export default function UsersPage() {
   const router = useRouter();
   const { user: currentUser, isAdmin } = useAuth();
   const [users, setUsers] = useState<UserType[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserType[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -57,6 +66,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadUsers();
+    loadPendingInvites();
   }, []);
 
   useEffect(() => {
@@ -74,6 +84,18 @@ export default function UsersPage() {
       console.error('Error loading users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPendingInvites = async () => {
+    try {
+      const response = await fetch('/api/admin/users/pending-invites');
+      if (response.ok) {
+        const data = await response.json();
+        setPendingInvites(data);
+      }
+    } catch (error) {
+      console.error('Error loading pending invites:', error);
     }
   };
 
@@ -392,6 +414,34 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+
+      {/* Pending Invites */}
+      {pendingInvites.length > 0 && (
+        <div className="bg-yellow-50 rounded-lg shadow-sm p-4 mb-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
+            <Mail className="h-5 w-5 text-yellow-600" />
+            Pending Invitations
+          </h3>
+          <div className="space-y-2">
+            {pendingInvites.map((invite) => (
+              <div key={invite.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-yellow-200">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">{invite.email}</span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadge(invite.role).color}`}>
+                    {getRoleBadge(invite.role).label}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Invited {new Date(invite.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                  Awaiting acceptance
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -853,6 +903,7 @@ export default function UsersPage() {
                       setShowInviteModal(false);
                       setInviteEmails([{ email: '', role: 'viewer' }]);
                       loadUsers(); // Reload user list
+                      loadPendingInvites(); // Reload pending invites
                     } else {
                       alert('Error sending invites');
                     }

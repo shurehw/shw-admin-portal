@@ -41,7 +41,7 @@ export default function CRMSettingsPage() {
         title: 'Pipeline Management',
         description: 'Create and manage sales pipelines with custom stages',
         icon: Target,
-        href: '/crm/pipelines',
+        href: '/crm/settings/pipelines',
         color: 'blue'
       },
       {

@@ -2,14 +2,16 @@
 
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import NextImage from 'next/image';
 import { 
   Home, Building, FileText, Package, CreditCard, Users, 
   Settings, LogOut, Menu, X, Bell, Search, ChevronDown,
-  BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy
+  BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy, DollarSign,
+  FilePlus
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -17,11 +19,13 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   // Get user role and permissions
-  const userRole = 'admin';
+  const userRole = user?.role || 'viewer';
   
   // Define navigation based on user role
   const getNavigation = () => {
@@ -32,11 +36,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const salesNav = [
       { name: 'CRM', href: '/crm', icon: UserCheck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
-      { name: 'Order Status', href: '/admin/order-status', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
-      { name: 'Customers', href: '/admin/customers', icon: Building, roles: ['admin', 'sales_rep', 'customer_service'] },
-      { name: 'Orders', href: '/admin/orders', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
+      { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
+      { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Custom Catalog', href: '/admin/custom-catalog', icon: Package, roles: ['admin', 'sales_rep'] },
       { name: 'Quotes', href: '/admin/quotes', icon: FileText, roles: ['admin', 'sales_rep'] },
+      { name: 'Quote Requests', href: '/admin/quotes/requests', icon: FileText, roles: ['admin', 'sales_rep'] },
+      { name: 'New Quote Request', href: '/quotes/new', icon: FilePlus, roles: ['admin', 'sales_rep'] },
       { name: 'Invoices', href: '/admin/invoices', icon: CreditCard, roles: ['admin', 'sales_rep', 'customer_service'] },
     ];
     
@@ -45,6 +50,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     ];
     
     const adminNav = [
+      { name: 'Users', href: '/admin/users', icon: Users, roles: ['admin'] },
       { name: 'Reports', href: '/admin/reports', icon: BarChart3, roles: ['admin'] },
     ];
     
@@ -55,11 +61,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigation = getNavigation();
 
   const handleSignOut = async () => {
-    router.push('/admin/login');
+    signOut();
   };
 
-  const userName = 'Admin User';
-  const userEmail = 'admin@shurehw.com';
+  const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -183,7 +189,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <nav className="mt-6 px-4 pb-24">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const isActive = false; // Remove router.pathname check for now
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               
               return (
                 <Link

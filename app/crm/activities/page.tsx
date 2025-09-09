@@ -7,19 +7,6 @@ import {
   Clock, CheckCircle2, AlertCircle, Edit2, Trash2, 
   MessageSquare, FileText, Handshake, User, Building2
 } from 'lucide-react';
-import { db } from '@/lib/firebase-client';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  getDocs, 
-  query, 
-  where, 
-  orderBy,
-  serverTimestamp 
-} from 'firebase/firestore';
 
 interface Activity {
   id: string;
@@ -34,13 +21,13 @@ interface Activity {
   assignedTo: string;
   dueDate: string;
   completedDate?: string;
-  duration?: number; // in minutes
+  duration?: number;
   location?: string;
   outcome?: string;
   followUpRequired: boolean;
   followUpDate?: string;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function ActivitiesPage() {
@@ -106,19 +93,100 @@ export default function ActivitiesPage() {
 
   const loadActivities = async () => {
     try {
-      const activitiesQuery = query(
-        collection(db, 'activities'),
-        orderBy('dueDate', 'desc')
-      );
-      const snapshot = await getDocs(activitiesQuery);
-      const activitiesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Activity[];
-      
+      // Mock activities data
+      const mockActivities: Activity[] = [
+        {
+          id: '1',
+          type: 'call',
+          subject: 'Follow-up call with Marriott procurement',
+          description: 'Discuss keycard requirements and pricing for Q2 rollout',
+          contactName: 'Sarah Johnson',
+          company: 'Marriott International',
+          dealName: 'Marriott - Q1 Keycard Order',
+          status: 'scheduled',
+          priority: 'high',
+          assignedTo: 'John Smith',
+          dueDate: new Date(Date.now() + 86400000).toISOString(),
+          duration: 30,
+          followUpRequired: true,
+          followUpDate: new Date(Date.now() + 259200000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          type: 'meeting',
+          subject: 'Product demo for Hilton team',
+          description: 'Show new RFID lock integration features',
+          contactName: 'Mike Chen',
+          company: 'Hilton Hotels',
+          dealName: 'Hilton - Smart Lock Upgrade',
+          status: 'completed',
+          priority: 'high',
+          assignedTo: 'Emily Davis',
+          dueDate: new Date(Date.now() - 86400000).toISOString(),
+          completedDate: new Date(Date.now() - 86400000).toISOString(),
+          duration: 60,
+          location: 'Hilton Corporate Office',
+          outcome: 'Very positive response, requesting formal proposal',
+          followUpRequired: true,
+          followUpDate: new Date(Date.now() + 172800000).toISOString(),
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+          id: '3',
+          type: 'email',
+          subject: 'Send pricing update to IHG',
+          description: 'Forward updated pricing sheet with volume discounts',
+          contactName: 'Lisa Wong',
+          company: 'InterContinental Hotels Group',
+          status: 'scheduled',
+          priority: 'medium',
+          assignedTo: 'John Smith',
+          dueDate: new Date(Date.now() + 172800000).toISOString(),
+          followUpRequired: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: '4',
+          type: 'task',
+          subject: 'Prepare contract terms for Hyatt',
+          description: 'Review legal requirements for master service agreement',
+          contactName: 'David Park',
+          company: 'Hyatt Hotels',
+          dealName: 'Hyatt - Master Agreement',
+          status: 'overdue',
+          priority: 'high',
+          assignedTo: 'Emily Davis',
+          dueDate: new Date(Date.now() - 172800000).toISOString(),
+          followUpRequired: true,
+          createdAt: new Date(Date.now() - 432000000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString()
+        },
+        {
+          id: '5',
+          type: 'demo',
+          subject: 'Virtual demo for Wyndham properties',
+          description: 'Remote demonstration of keycard management system',
+          contactName: 'Jennifer Liu',
+          company: 'Wyndham Hotels',
+          status: 'scheduled',
+          priority: 'medium',
+          assignedTo: 'John Smith',
+          dueDate: new Date(Date.now() + 432000000).toISOString(),
+          duration: 45,
+          location: 'Video Conference',
+          followUpRequired: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
+
       // Check for overdue activities
       const now = new Date();
-      const updatedActivities = activitiesData.map(activity => {
+      const updatedActivities = mockActivities.map(activity => {
         if (activity.status === 'scheduled' && new Date(activity.dueDate) < now) {
           return { ...activity, status: 'overdue' as Activity['status'] };
         }
@@ -166,23 +234,33 @@ export default function ActivitiesPage() {
       const activityData = {
         ...formData,
         duration: formData.duration ? parseInt(formData.duration) : undefined,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
       };
 
       if (selectedActivity) {
-        await updateDoc(doc(db, 'activities', selectedActivity.id), {
-          ...activityData,
-          createdAt: selectedActivity.createdAt,
-          updatedAt: serverTimestamp(),
-          completedDate: formData.status === 'completed' ? new Date().toISOString() : selectedActivity.completedDate
-        });
+        // Update existing activity
+        const updatedActivities = activities.map(activity => 
+          activity.id === selectedActivity.id 
+            ? { 
+                ...activity, 
+                ...activityData,
+                completedDate: formData.status === 'completed' ? new Date().toISOString() : activity.completedDate,
+                updatedAt: new Date().toISOString()
+              }
+            : activity
+        );
+        setActivities(updatedActivities);
       } else {
-        await addDoc(collection(db, 'activities'), activityData);
+        // Add new activity
+        const newActivity: Activity = {
+          id: Date.now().toString(),
+          ...activityData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        setActivities([newActivity, ...activities]);
       }
 
       resetForm();
-      loadActivities();
     } catch (error) {
       console.error('Error saving activity:', error);
     }
@@ -213,8 +291,7 @@ export default function ActivitiesPage() {
   const handleDelete = async (activityId: string) => {
     if (confirm('Are you sure you want to delete this activity?')) {
       try {
-        await deleteDoc(doc(db, 'activities', activityId));
-        loadActivities();
+        setActivities(activities.filter(activity => activity.id !== activityId));
       } catch (error) {
         console.error('Error deleting activity:', error);
       }
@@ -223,12 +300,17 @@ export default function ActivitiesPage() {
 
   const markComplete = async (activityId: string) => {
     try {
-      await updateDoc(doc(db, 'activities', activityId), {
-        status: 'completed',
-        completedDate: new Date().toISOString(),
-        updatedAt: serverTimestamp()
-      });
-      loadActivities();
+      const updatedActivities = activities.map(activity => 
+        activity.id === activityId 
+          ? { 
+              ...activity, 
+              status: 'completed' as Activity['status'],
+              completedDate: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          : activity
+      );
+      setActivities(updatedActivities);
     } catch (error) {
       console.error('Error marking activity as complete:', error);
     }

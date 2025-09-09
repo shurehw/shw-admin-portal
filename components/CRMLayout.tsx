@@ -9,7 +9,8 @@ import {
   Users, Building2, BarChart3, Target, Search,
   Plus, TrendingUp, Database, RefreshCw, Command, Home,
   Handshake, Settings, Activity, Mail, CheckSquare,
-  Workflow, Clock, MessageSquare, ListTodo, Zap, ChevronDown
+  Workflow, Clock, MessageSquare, ListTodo, Zap, ChevronDown,
+  FilePlus
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 
@@ -47,6 +48,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { label: 'New Deal', icon: Handshake, href: '/crm/deals/new', capability: 'deals:write' },
     { label: 'New Activity', icon: Activity, href: '/crm/activities/new', capability: 'contacts:write' },
     { label: 'New Task', icon: CheckSquare, href: '/crm/tasks/new', capability: 'contacts:write' },
+    { label: 'New Quote', icon: FilePlus, href: '/quotes/new', capability: 'quotes:write' },
   ].filter(action => hasCapability(action.capability as any));
 
   return (

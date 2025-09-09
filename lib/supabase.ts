@@ -2,8 +2,23 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://ifyjjvbqmyyuhzpoxlsl.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmeWpqdmJxbXl5dWh6cG94bHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3OTUzMjksImV4cCI6MjA3MDM3MTMyOX0.yXS4pbap1yVfhidFCN4MZkZE4lbkF5yS9V-nR88V1kc'
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmeWpqdmJxbXl5dWh6cG94bHNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDc5NTMyOSwiZXhwIjoyMDcwMzcxMzI5fQ.IIRm2nN0YdT6uosrGk5pypgW50rOhHxqOiWO0aN4r_U'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+// User management types
+export interface User {
+  id: string;
+  email: string;
+  full_name?: string;
+  role: 'admin' | 'sales_rep' | 'customer_service' | 'production' | 'art_team' | 'viewer';
+  department?: string;
+  phone?: string;
+  status: 'active' | 'inactive' | 'suspended';
+  created_at: string;
+  last_sign_in_at?: string;
+}
 
 // Database types for hospitality CRM
 export interface Venue {
@@ -243,7 +258,7 @@ export interface MinimalCompany {
 // Minimal CRM Services
 export class MinimalContactService {
   static async getAll(): Promise<MinimalContact[]> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contacts')
       .select(`
         *,
@@ -260,7 +275,7 @@ export class MinimalContactService {
   }
 
   static async getById(id: string): Promise<MinimalContact | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contacts')
       .select(`
         *,
@@ -281,7 +296,7 @@ export class MinimalContactService {
   }
 
   static async create(contact: Omit<MinimalContact, 'id' | 'created_at' | 'updated_at'>): Promise<MinimalContact> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contacts')
       .insert([contact])
       .select()
@@ -296,7 +311,7 @@ export class MinimalContactService {
   }
 
   static async update(id: string, updates: Partial<MinimalContact>): Promise<MinimalContact> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contacts')
       .update(updates)
       .eq('id', id)
@@ -312,7 +327,7 @@ export class MinimalContactService {
   }
 
   static async delete(id: string): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('contacts')
       .delete()
       .eq('id', id);
@@ -326,7 +341,7 @@ export class MinimalContactService {
 
 export class MinimalCompanyService {
   static async getAll(): Promise<MinimalCompany[]> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('companies')
       .select(`
         *,
@@ -343,7 +358,7 @@ export class MinimalCompanyService {
   }
 
   static async getById(id: string): Promise<MinimalCompany | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('companies')
       .select(`
         *,
@@ -364,7 +379,7 @@ export class MinimalCompanyService {
   }
 
   static async create(company: Omit<MinimalCompany, 'id' | 'created_at' | 'updated_at'>): Promise<MinimalCompany> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('companies')
       .insert([company])
       .select()
@@ -379,7 +394,7 @@ export class MinimalCompanyService {
   }
 
   static async update(id: string, updates: Partial<MinimalCompany>): Promise<MinimalCompany> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('companies')
       .update(updates)
       .eq('id', id)
@@ -395,7 +410,7 @@ export class MinimalCompanyService {
   }
 
   static async delete(id: string): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('companies')
       .delete()
       .eq('id', id);

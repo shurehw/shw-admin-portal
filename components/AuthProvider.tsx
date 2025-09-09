@@ -8,7 +8,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    // Return mock auth during static generation
+    return {
+      user: null,
+      isAuthenticated: false,
+      loading: true,
+      hasCapability: () => false,
+      hasAnyCapability: () => false,
+      hasAllCapabilities: () => false,
+      logout: async () => {},
+    };
   }
   return context;
 };

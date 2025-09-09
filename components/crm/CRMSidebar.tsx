@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Menu,
   ArrowLeft,
-  Home
+  Home,
+  DollarSign
 } from 'lucide-react';
 
 const navigation = [
@@ -47,6 +48,11 @@ const navigation = [
     icon: Target,
   },
   {
+    name: 'Company Pricing',
+    href: '/crm/pricing',
+    icon: DollarSign,
+  },
+  {
     name: 'Tasks',
     href: '/crm/tasks',
     icon: CheckSquare,
@@ -61,16 +67,6 @@ const navigation = [
     href: '/crm/tickets',
     icon: Ticket,
     badge: 'Light',
-  },
-  {
-    name: 'Pipeline',
-    href: '/crm/pipeline',
-    icon: GitBranch,
-  },
-  {
-    name: 'Pipelines',
-    href: '/crm/pipelines',
-    icon: List,
   },
   {
     name: 'Communications',

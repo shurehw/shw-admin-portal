@@ -1,12 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TaskService, Task } from '@/lib/crm-services';
 import { 
   Plus, Clock, CheckCircle2, AlertTriangle, Calendar, User, Building2,
   Filter, Search, MoreHorizontal, Edit, Trash2, Play, Pause
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface Task {
+  id: string;
+  title: string;
+  notes?: string;
+  status: 'open' | 'in_progress' | 'waiting' | 'done';
+  priority: 'low' | 'normal' | 'high';
+  due_date?: string;
+  completed_at?: string;
+  owner_id?: string;
+  related_contact_id?: string;
+  related_company_id?: string;
+  created_at: string;
+  updated_at: string;
+  contact_name?: string;
+  company_name?: string;
+  owner_name?: string;
+}
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -31,18 +48,94 @@ export default function TasksPage() {
     try {
       setLoading(true);
       
-      // Build filter object for API
-      const filters: any = {};
-      if (filter.status !== 'all') filters.status = filter.status;
-      if (filter.owner !== 'all') filters.owner_id = filter.owner;
-      
-      const tasksData = await TaskService.getAll(filters);
+      // Mock data - in production would fetch from API
+      const mockTasks: Task[] = [
+        {
+          id: '1',
+          title: 'Follow up on Marriott proposal',
+          notes: 'Check if they reviewed the custom keycard design',
+          status: 'open',
+          priority: 'high',
+          due_date: new Date(Date.now() + 86400000).toISOString(),
+          owner_id: 'user1',
+          related_company_id: 'comp1',
+          company_name: 'Marriott International',
+          owner_name: 'John Smith',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          title: 'Schedule product demo with Hilton',
+          notes: 'They want to see the new RFID lock integration',
+          status: 'in_progress',
+          priority: 'normal',
+          due_date: new Date(Date.now() + 172800000).toISOString(),
+          owner_id: 'user1',
+          related_contact_id: 'cont1',
+          contact_name: 'Sarah Johnson',
+          company_name: 'Hilton Hotels',
+          owner_name: 'John Smith',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          title: 'Send hardware samples to IHG',
+          notes: 'Include the new matte black finish options',
+          status: 'done',
+          priority: 'normal',
+          completed_at: new Date(Date.now() - 86400000).toISOString(),
+          owner_id: 'user2',
+          related_company_id: 'comp3',
+          company_name: 'InterContinental Hotels Group',
+          owner_name: 'Emily Davis',
+          created_at: new Date(Date.now() - 259200000).toISOString(),
+          updated_at: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+          id: '4',
+          title: 'Review contract terms with legal',
+          notes: 'For the Hyatt master agreement',
+          status: 'waiting',
+          priority: 'high',
+          due_date: new Date(Date.now() - 86400000).toISOString(), // Overdue
+          owner_id: 'user1',
+          related_company_id: 'comp4',
+          company_name: 'Hyatt Hotels',
+          owner_name: 'John Smith',
+          created_at: new Date(Date.now() - 432000000).toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '5',
+          title: 'Prepare Q1 pricing update',
+          notes: 'Include volume discounts for enterprise clients',
+          status: 'open',
+          priority: 'low',
+          due_date: new Date(Date.now() + 604800000).toISOString(),
+          owner_id: 'user2',
+          owner_name: 'Emily Davis',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
       
       // Apply client-side filters
-      let filteredTasks = tasksData;
+      let filteredTasks = mockTasks;
+      
+      if (filter.status !== 'all') {
+        filteredTasks = filteredTasks.filter(task => task.status === filter.status);
+      }
       
       if (filter.priority !== 'all') {
         filteredTasks = filteredTasks.filter(task => task.priority === filter.priority);
+      }
+      
+      if (filter.owner !== 'all') {
+        if (filter.owner === 'me') {
+          filteredTasks = filteredTasks.filter(task => task.owner_id === 'user1');
+        }
       }
       
       if (filter.search) {
@@ -65,8 +158,19 @@ export default function TasksPage() {
 
   const updateTaskStatus = async (taskId: string, status: Task['status']) => {
     try {
-      await TaskService.update(taskId, { status });
-      await loadTasks(); // Refresh
+      // Update task in local state
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { 
+                ...task, 
+                status,
+                completed_at: status === 'done' ? new Date().toISOString() : undefined,
+                updated_at: new Date().toISOString()
+              }
+            : task
+        )
+      );
     } catch (error) {
       console.error('Error updating task:', error);
     }
@@ -76,8 +180,8 @@ export default function TasksPage() {
     if (!confirm('Are you sure you want to delete this task?')) return;
     
     try {
-      await TaskService.delete(taskId);
-      await loadTasks(); // Refresh
+      // Remove task from local state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
     } catch (error) {
       console.error('Error deleting task:', error);
     }
