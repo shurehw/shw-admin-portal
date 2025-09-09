@@ -33,6 +33,11 @@ const navigation = [
     icon: BarChart3,
   },
   {
+    name: 'Smart Leads',
+    href: '/crm/leads',
+    icon: Target,
+  },
+  {
     name: 'Contacts',
     href: '/crm/contacts',
     icon: Users,
@@ -45,7 +50,7 @@ const navigation = [
   {
     name: 'Deals',
     href: '/crm/deals',
-    icon: Target,
+    icon: DollarSign,
   },
   {
     name: 'Company Pricing',
@@ -284,13 +289,13 @@ export default function CRMSidebar({ className = '' }: CRMSidebarProps) {
               <div className="flex-shrink-0">
                 <div className={`${isCollapsed ? 'h-8 w-8' : 'h-8 w-8'} rounded-full bg-blue-500 flex items-center justify-center`}>
                   <span className="text-white text-sm font-medium">
-                    {isCollapsed ? 'S' : 'SH'}
+                    {isCollapsed ? 'S' : 'SHW'}
                   </span>
                 </div>
               </div>
               {!isCollapsed && (
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">Shure Hardware</p>
+                  <p className="text-sm font-medium text-gray-900">SHW</p>
                   <p className="text-xs text-gray-500">CRM System</p>
                 </div>
               )}
