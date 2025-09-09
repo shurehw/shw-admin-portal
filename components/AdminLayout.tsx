@@ -40,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     
     const salesNav = [
       { name: 'CRM', href: '/crm', icon: UserCheck, roles: ['admin', 'sales_rep', 'customer_service'] },
+      { name: 'Contacts & Companies', href: '/crm/contacts-companies', icon: Building, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
