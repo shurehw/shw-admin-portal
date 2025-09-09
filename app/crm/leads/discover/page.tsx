@@ -125,24 +125,73 @@ export default function DiscoverLeadsPage() {
     setImporting(true);
     
     try {
-      // Get selected lead data
+      // Get user info for tracking
+      const userEmail = localStorage.getItem('userEmail') || 'system';
+      const userName = localStorage.getItem('userName') || 'System';
+      
+      // Get selected lead data - use raw data directly as it's already properly formatted
       const leadsToImport = discoveredLeads
         .filter(lead => selectedLeads.has(lead.id))
-        .map((lead: any) => lead.raw); // Use the raw data
+        .map((lead: any) => {
+          // The raw data is already a properly formatted lead from the discovery API
+          if (lead.raw && typeof lead.raw === 'object') {
+            // Add user tracking to the raw data
+            if (lead.raw.raw) {
+              lead.raw.raw.added_by = userEmail;
+              lead.raw.raw.added_by_name = userName;
+              lead.raw.raw.added_at = new Date().toISOString();
+            }
+            return lead.raw;
+          }
+          // Fallback: create proper structure if raw is missing
+          return {
+            source: lead.source || 'discovery',
+            raw: {
+              ...lead,
+              added_by: userEmail,
+              added_by_name: userName,
+              added_at: new Date().toISOString()
+            },
+            suggested_company: {
+              name: lead.name,
+              segment: lead.segment,
+              sub_segment: lead.sub_segment
+            },
+            suggested_location: lead.address ? {
+              formatted_address: lead.address,
+              city: lead.city,
+              state: lead.state
+            } : null,
+            score_preview: lead.score,
+            winability_preview: lead.winability,
+            status: 'pending'
+          };
+        });
       
       // Import selected leads to database
       const response = await fetch('/api/crm/leads/intake', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-email': userEmail,
+          'x-user-name': userName
+        },
         body: JSON.stringify({
           leads: leadsToImport,
           bulk: true
         })
       });
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Import failed:', errorData);
+        alert(`Failed to import leads: ${errorData.error || 'Unknown error'}`);
+        return;
+      }
+      
       const data = await response.json();
       
-      if (data.success || data.id) {
+      if (data.success || data.leads) {
         // Automatically enrich imported leads with Apollo data
         if (data.leads && data.leads.length > 0) {
           console.log(`Auto-enriching ${data.leads.length} leads with Apollo data...`);
@@ -189,7 +238,8 @@ export default function DiscoverLeadsPage() {
           router.push('/crm/leads');
         }, 500);
       } else {
-        alert('Failed to import leads. Please try again.');
+        console.error('Import response:', data);
+        alert(`Failed to import leads: ${data.error || 'No leads were imported'}`);
       }
     } catch (error) {
       console.error('Import error:', error);
