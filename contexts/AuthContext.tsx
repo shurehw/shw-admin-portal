@@ -11,6 +11,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => ({ error: 'Not implemented' }),
   signOut: async () => {},
+  refreshProfile: async () => {},
   isAdmin: false,
 });
 
@@ -31,6 +33,7 @@ export function useAuth() {
       loading: true,
       signIn: async () => ({ error: 'Not implemented' }),
       signOut: async () => {},
+      refreshProfile: async () => {},
       isAdmin: false,
     };
   }
@@ -239,10 +242,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function refreshProfile() {
+    const supabase = getSupabaseBrowser();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      await fetchUserProfile(authUser.id);
+    }
+  }
+
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, refreshProfile, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

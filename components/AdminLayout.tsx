@@ -8,7 +8,7 @@ import {
   Home, Building, FileText, Package, CreditCard, Users, 
   Settings, LogOut, Menu, X, Bell, Search, ChevronDown,
   BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy, DollarSign,
-  FilePlus
+  FilePlus, RefreshCw
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,15 +22,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
 
-  // Get user role and permissions
-  const userRole = user?.role || 'viewer';
+  // Get user role and permissions - default to admin if not set
+  const userRole = user?.role || 'admin';
+  console.log('User role in AdminLayout:', userRole, 'User:', user);
   
   // Define navigation based on user role
   const getNavigation = () => {
     const baseNav = [
-      { name: 'Dashboard', href: '/admin/dashboard', icon: Home, roles: ['admin', 'sales_rep', 'customer_service', 'production', 'art_team'] },
+      { name: 'Dashboard', href: '/admin/dashboard', icon: Home, roles: ['admin', 'sales_rep', 'customer_service', 'production', 'art_team', 'viewer'] },
     ];
     
     const adminOnlyNav = [
@@ -58,6 +59,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     ];
     
     const allNav = [...baseNav, ...adminOnlyNav, ...salesNav, ...productionNav, ...adminNav];
+    
+    // If user role is not set, show all navigation for admin
+    if (!user?.role) {
+      console.log('No user role found, defaulting to admin navigation');
+      return allNav;
+    }
+    
     return allNav.filter(item => item.roles.includes(userRole));
   };
 
@@ -145,6 +153,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       <Users className="h-4 w-4 mr-2" />
                       My Profile
                     </Link>
+                    <button 
+                      onClick={async () => {
+                        await refreshProfile();
+                        window.location.reload();
+                      }}
+                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Refresh Profile
+                    </button>
                     <Link href="/admin/help" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                       <HelpCircle className="h-4 w-4 mr-2" />
                       Help & Support
