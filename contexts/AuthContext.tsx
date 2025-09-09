@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, User } from '@/lib/supabase';
+import { User } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import { userPermissions, defaultRole, allowedDomains } from '@/config/user-permissions';
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -63,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function checkUser() {
     try {
+      const supabase = getSupabaseBrowser();
       const { data: { session }, error } = await supabase.auth.getSession();
       console.log('Checking user session:', session?.user?.email, error);
       
@@ -85,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchUserProfile(userId: string) {
     try {
+      const supabase = getSupabaseBrowser();
       // First check if user_profiles table exists and has data
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -202,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     try {
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -225,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     try {
+      const supabase = getSupabaseBrowser();
       await supabase.auth.signOut();
       setUser(null);
       router.push('/admin/login');

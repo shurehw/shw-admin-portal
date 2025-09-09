@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, Mail } from 'lucide-react';
@@ -20,6 +20,7 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
+      const supabase = getSupabaseBrowser();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -42,6 +43,7 @@ export default function AdminLogin() {
     setGoogleLoading(true);
 
     try {
+      const supabase = getSupabaseBrowser();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
