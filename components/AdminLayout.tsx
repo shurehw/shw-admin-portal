@@ -40,15 +40,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     
     const salesNav = [
       { name: 'CRM Dashboard', href: '/crm', icon: UserCheck, roles: ['admin', 'sales_rep', 'customer_service'] },
-      { name: 'Contacts', href: '/crm/contacts-new', icon: Users, roles: ['admin', 'sales_rep', 'customer_service'] },
-      { name: 'Companies', href: '/crm/companies-new', icon: Building, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Custom Catalog', href: '/admin/custom-catalog', icon: Package, roles: ['admin', 'sales_rep'] },
       { name: 'Quotes', href: '/admin/quotes', icon: FileText, roles: ['admin', 'sales_rep'] },
       { name: 'Quote Requests', href: '/admin/quotes/requests', icon: FileText, roles: ['admin', 'sales_rep'] },
-      { name: 'New Quote Request', href: '/quotes/new', icon: FilePlus, roles: ['admin', 'sales_rep'] },
       { name: 'Invoices', href: '/admin/invoices', icon: CreditCard, roles: ['admin', 'sales_rep', 'customer_service'] },
     ];
     

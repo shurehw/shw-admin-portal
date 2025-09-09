@@ -5,8 +5,9 @@ import AdminLayout from '@/components/AdminLayout';
 import { 
   FileText, Search, Eye, Calendar, User, 
   Package, Hash, Palette, Layers, Upload,
-  ChevronDown, ChevronUp, Clock, CheckCircle
+  ChevronDown, ChevronUp, Clock, CheckCircle, Plus
 } from 'lucide-react';
+import Link from 'next/link';
 
 interface QuoteRequest {
   id: string;
@@ -118,13 +119,24 @@ export default function QuoteRequestsPage() {
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <FileText className="h-8 w-8 mr-3" />
-            Quote Requests
-          </h1>
-          <p className="text-gray-600 mt-1">
-            View and manage all quote requests submitted through the form
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <FileText className="h-8 w-8 mr-3" />
+                Quote Requests
+              </h1>
+              <p className="text-gray-600 mt-1">
+                View and manage all quote requests submitted through the form
+              </p>
+            </div>
+            <Link
+              href="/quotes/new"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+              New Quote Request
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
