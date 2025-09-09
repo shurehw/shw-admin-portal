@@ -754,7 +754,11 @@ export default function SmartLeadsPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {intakeQueue.map(lead => (
-                          <tr key={lead.id} className="hover:bg-gray-50">
+                          <tr 
+                            key={lead.id} 
+                            className="hover:bg-gray-50 cursor-pointer"
+                            onClick={() => handleLeadClick(lead)}
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">
@@ -803,28 +807,38 @@ export default function SmartLeadsPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex gap-1">
                                 <button
-                                  onClick={() => handleApproveLead(lead.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApproveLead(lead.id);
+                                  }}
                                   className="text-green-600 hover:text-green-900"
                                   title="Approve"
                                 >
                                   <ThumbsUp className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDenyLead(lead.id, 'not_icp')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDenyLead(lead.id, 'not_icp');
+                                  }}
                                   className="text-red-600 hover:text-red-900"
                                   title="Deny"
                                 >
                                   <ThumbsDown className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleSnoozeLead(lead.id, 30)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSnoozeLead(lead.id, 30);
+                                  }}
                                   className="text-yellow-600 hover:text-yellow-900"
                                   title="Snooze"
                                 >
                                   <Timer className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setSelectedLead(lead);
                                     setShowAssignModal(true);
                                   }}
