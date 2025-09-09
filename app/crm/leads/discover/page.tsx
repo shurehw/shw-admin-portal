@@ -185,7 +185,9 @@ export default function DiscoverLeadsPage() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Import failed:', errorData);
-        alert(`Failed to import leads: ${errorData.error || 'Unknown error'}`);
+        const errorMessage = errorData.details || errorData.error || 'Unknown error';
+        const hint = errorData.hint ? `\n\nHint: ${errorData.hint}` : '';
+        alert(`Failed to import leads: ${errorMessage}${hint}`);
         return;
       }
       

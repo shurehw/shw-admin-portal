@@ -53,12 +53,49 @@ export async function POST(request: NextRequest) {
     
     // Check if this is a bulk import
     if (body.bulk && body.leads && Array.isArray(body.leads)) {
-      const leadsToInsert = body.leads.map((lead: any) => ({
-        ...lead,
-        added_by: userEmail,
-        added_by_name: userName,
-        added_at: new Date().toISOString()
-      }));
+      console.log('Bulk import request received:', {
+        leadCount: body.leads.length,
+        userEmail,
+        userName,
+        firstLead: body.leads[0] ? {
+          source: body.leads[0].source,
+          hasRaw: !!body.leads[0].raw,
+          hasSuggestedCompany: !!body.leads[0].suggested_company,
+          keys: Object.keys(body.leads[0])
+        } : null
+      });
+      
+      const leadsToInsert = body.leads.map((lead: any) => {
+        // Ensure required fields are present
+        const insertData: any = {
+          source: lead.source || 'discovery',
+          status: lead.status || 'pending',
+          score_preview: lead.score_preview || 0,
+          winability_preview: lead.winability_preview || 0
+        };
+        
+        // Add raw data with user tracking
+        insertData.raw = lead.raw || {};
+        insertData.raw.added_by = userEmail;
+        insertData.raw.added_by_name = userName;
+        insertData.raw.added_at = new Date().toISOString();
+        
+        // Add optional fields if present
+        if (lead.suggested_company) insertData.suggested_company = lead.suggested_company;
+        if (lead.suggested_location) insertData.suggested_location = lead.suggested_location;
+        if (lead.suggested_contacts) insertData.suggested_contacts = lead.suggested_contacts;
+        if (lead.reason_code) insertData.reason_code = lead.reason_code;
+        if (lead.notes) insertData.notes = lead.notes;
+        if (lead.assigned_to) insertData.assigned_to = lead.assigned_to;
+        if (lead.company_id) insertData.company_id = lead.company_id;
+        
+        return insertData;
+      });
+      
+      console.log('Inserting leads:', {
+        count: leadsToInsert.length,
+        firstLeadKeys: leadsToInsert[0] ? Object.keys(leadsToInsert[0]) : []
+      });
       
       const { data, error } = await supabase
         .from('lead_intake')
@@ -66,8 +103,17 @@ export async function POST(request: NextRequest) {
         .select();
       
       if (error) {
-        console.error('Error bulk importing leads:', error);
-        return NextResponse.json({ error: 'Failed to import leads' }, { status: 500 });
+        console.error('Error bulk importing leads - Supabase error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        return NextResponse.json({ 
+          error: 'Failed to import leads',
+          details: error.message,
+          hint: error.hint
+        }, { status: 500 });
       }
       
       return NextResponse.json({ 
