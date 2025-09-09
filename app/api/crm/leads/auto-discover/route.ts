@@ -8,18 +8,31 @@ const supabase = createClient(
 
 // Configuration for automated discovery
 const DISCOVERY_CONFIG = {
-  // Target locations to search
+  // Target locations - SoCal Focus
   locations: [
-    'New York, NY',
+    // Los Angeles County
     'Los Angeles, CA',
-    'Chicago, IL',
-    'Houston, TX',
-    'Phoenix, AZ',
-    'Philadelphia, PA',
-    'San Antonio, TX',
-    'San Diego, CA',
-    'Dallas, TX',
-    'Miami, FL'
+    'Beverly Hills, CA',
+    'Santa Monica, CA',
+    'West Hollywood, CA',
+    'Pasadena, CA',
+    'Long Beach, CA',
+    'Manhattan Beach, CA',
+    'Culver City, CA',
+    'Glendale, CA',
+    'Burbank, CA',
+    
+    // Orange County
+    'Newport Beach, CA',
+    'Irvine, CA',
+    'Costa Mesa, CA',
+    'Huntington Beach, CA',
+    'Laguna Beach, CA',
+    'Anaheim, CA',
+    'Orange, CA',
+    'Santa Ana, CA',
+    'Fullerton, CA',
+    'Mission Viejo, CA'
   ],
   
   // Business categories to target
