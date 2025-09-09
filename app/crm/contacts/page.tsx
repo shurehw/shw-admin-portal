@@ -211,11 +211,6 @@ export default function ContactsPage() {
 
   const handleAddContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) {
-      alert('Only administrators can add contacts');
-      return;
-    }
-
     setSaving(true);
     try {
       const response = await fetch('/api/crm/contacts', {
@@ -242,10 +237,6 @@ export default function ContactsPage() {
 
   const handleEditContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) {
-      alert('Only administrators can edit contacts');
-      return;
-    }
 
     if (!selectedContact) return;
 
@@ -329,10 +320,6 @@ export default function ContactsPage() {
   };
 
   const handleDeleteContact = async (contactId: string) => {
-    if (!isAdmin) {
-      alert('Only administrators can delete contacts');
-      return;
-    }
 
     if (!confirm('Are you sure you want to delete this contact?')) return;
 
@@ -756,8 +743,8 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Add/Edit Contact Modal - Only show for admins */}
-        {isAdmin && (showAddModal || showEditModal) && (
+        {/* Add/Edit Contact Modal */}
+        {(showAddModal || showEditModal) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
               <h2 className="text-xl font-semibold mb-4">
