@@ -168,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: createdProfile.email,
                 full_name: createdProfile.full_name,
                 role: createdProfile.role,
+                roles: [createdProfile.role], // Add roles array
                 department: createdProfile.department,
                 phone: createdProfile.phone,
                 status: createdProfile.status,
@@ -195,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: profile.email,
           full_name: profile.full_name,
           role: profile.role,
+          roles: [profile.role], // Add roles array
           department: profile.department,
           phone: profile.phone,
           status: profile.status,

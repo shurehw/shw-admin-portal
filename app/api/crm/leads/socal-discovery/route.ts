@@ -413,30 +413,40 @@ export async function POST(request: NextRequest) {
     const discoveredLeads = await discoverSoCalLeads({ area, category, source });
     
     // Convert to intake format
-    const leadsToInsert = discoveredLeads.slice(0, limit).map((lead: any) => ({
-      source: 'socal_focused_discovery',
-      raw: lead,
-      suggested_company: {
-        name: lead.name || lead.businessName,
-        segment: lead.segment || 'restaurant',
-        concept: lead.concept,
-        price_band: lead.pricePoint || '$$',
-        location_count: 1
-      },
-      suggested_location: {
-        city: lead.location?.split(',')[0] || lead.city,
-        state: 'CA',
-        formatted_address: lead.address || lead.location
-      },
-      suggested_contacts: lead.contacts || [],
-      score_preview: lead.score || 75,
-      winability_preview: Math.floor(Math.random() * 20) + 75,
-      status: 'pending',
-      signals: lead.signals?.map((s: string) => ({
+    const leadsToInsert = discoveredLeads.slice(0, limit).map((lead: any) => {
+      // Prepare signals for raw data
+      const discoverySignals = lead.signals?.map((s: string) => ({
         type: 'socal_signal',
         value: { description: s, confidence: 0.9 }
-      })) || []
-    }));
+      })) || [];
+
+      // Enrich raw data with discovery_signals
+      const enrichedLead = {
+        ...lead,
+        discovery_signals: discoverySignals
+      };
+
+      return {
+        source: 'socal_focused_discovery',
+        raw: enrichedLead,
+        suggested_company: {
+          name: lead.name || lead.businessName,
+          segment: lead.segment || 'restaurant',
+          concept: lead.concept,
+          price_band: lead.pricePoint || '$$',
+          location_count: 1
+        },
+        suggested_location: {
+          city: lead.location?.split(',')[0] || lead.city,
+          state: 'CA',
+          formatted_address: lead.address || lead.location
+        },
+        suggested_contacts: lead.contacts || [],
+        score_preview: lead.score || 75,
+        winability_preview: Math.floor(Math.random() * 20) + 75,
+        status: 'pending'
+      };
+    });
     
     // Insert into database
     const { data, error } = await supabase

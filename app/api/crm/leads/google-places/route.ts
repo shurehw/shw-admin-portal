@@ -12,8 +12,8 @@ async function searchGooglePlaces(params: any) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   
   if (!apiKey) {
-    console.log('Google Places API key not configured');
-    return [];
+    console.error('GOOGLE_PLACES_API_KEY environment variable not set');
+    throw new Error('Google Places API key not configured. Please set GOOGLE_PLACES_API_KEY environment variable.');
   }
   
   try {
@@ -146,9 +146,18 @@ function convertToLead(place: any) {
   else if (place.types?.includes('lodging')) segment = 'hotel';
   else if (place.types?.includes('bar')) segment = 'bar';
   
+  // Store signals in the raw data instead of as a separate field
+  const enrichedPlace = {
+    ...place,
+    discovery_signals: signals.map(s => ({
+      type: 'google_signal',
+      value: { description: s, confidence: 0.85 }
+    }))
+  };
+  
   return {
     source: 'google_places',
-    raw: place,
+    raw: enrichedPlace,
     suggested_company: {
       name: place.name,
       segment: segment,
@@ -170,11 +179,7 @@ function convertToLead(place: any) {
     suggested_contacts: [], // Google doesn't provide contact info
     score_preview: score,
     winability_preview: calculateWinability(place),
-    status: 'pending',
-    signals: signals.map(s => ({
-      type: 'google_signal',
-      value: { description: s, confidence: 0.85 }
-    }))
+    status: 'pending'
   };
 }
 
@@ -195,6 +200,15 @@ function calculateWinability(place: any) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check API key first
+    if (!process.env.GOOGLE_PLACES_API_KEY) {
+      console.error('GOOGLE_PLACES_API_KEY not configured in environment');
+      return NextResponse.json({ 
+        error: 'Google Places API key not configured',
+        message: 'Please configure GOOGLE_PLACES_API_KEY in environment variables'
+      }, { status: 500 });
+    }
+    
     const body = await request.json();
     const {
       locations = [
@@ -269,6 +283,9 @@ export async function POST(request: NextRequest) {
     );
     
     if (newLeads.length > 0) {
+      // Log the structure being inserted for debugging
+      console.log('Attempting to insert leads:', JSON.stringify(newLeads[0], null, 2));
+      
       // Insert new leads
       const { data, error } = await supabase
         .from('lead_intake')
@@ -276,10 +293,18 @@ export async function POST(request: NextRequest) {
         .select();
       
       if (error) {
-        console.error('Database error:', error);
+        console.error('Database error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        console.error('Sample lead structure:', JSON.stringify(newLeads[0], null, 2));
         return NextResponse.json({ 
           error: 'Failed to save Google Places leads',
-          details: error.message 
+          details: error.message,
+          hint: error.hint || 'Check database schema matches lead structure',
+          sample_lead: newLeads[0]
         }, { status: 500 });
       }
       

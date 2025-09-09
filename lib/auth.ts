@@ -20,6 +20,8 @@ export type CRMCapability =
   | 'tickets:read' | 'tickets:write'
   | 'tasks:read' | 'tasks:write'
   | 'activities:read' | 'activities:write'
+  | 'leads:read' | 'leads:write'
+  | 'quotes:read' | 'quotes:write'
   | 'analytics:read'
   | 'settings:write'
   | 'admin:read'
@@ -32,13 +34,27 @@ interface RoleMapping {
 
 // Default role mappings (fallback if portal sync fails)
 const DEFAULT_ROLE_MAPPINGS: RoleMapping = {
-  'sales_rep': [
+  'account_manager': [
     'contacts:read', 'contacts:write',
     'companies:read', 'companies:write', 
     'deals:read', 'deals:write',
     'tasks:read', 'tasks:write',
+    'activities:read', 'activities:write'
+    // Note: No analytics:read - they only see their own data
+  ],
+  'sales_manager': [
+    'contacts:read', 'contacts:write',
+    'companies:read', 'companies:write',
+    'deals:read', 'deals:write',
+    'tickets:read', 'tickets:write',
+    'tasks:read', 'tasks:write',
     'activities:read', 'activities:write',
-    'analytics:read'
+    'analytics:read',
+    'admin:read',
+    'leads:read', 'leads:write',
+    'quotes:read', 'quotes:write',
+    'settings:write'
+    // Full CRM admin - sees all data
   ],
   'cs_agent': [
     'contacts:read', 'contacts:write',
@@ -67,7 +83,9 @@ const DEFAULT_ROLE_MAPPINGS: RoleMapping = {
     'analytics:read',
     'settings:write',
     'admin:read',
-    'org:admin'
+    'org:admin',
+    'leads:read', 'leads:write',
+    'quotes:read', 'quotes:write'
   ]
 };
 

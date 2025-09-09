@@ -33,6 +33,7 @@ interface Company {
   source: string;
   tags: string[];
   notes?: string;
+  owner_id?: string;
   contactCount?: number;
   dealCount?: number;
   totalValue?: number;
@@ -71,6 +72,8 @@ export default function CompaniesPage() {
     spendingLimit: ''
   });
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [visibilityScope, setVisibilityScope] = useState<string>('');
+  const [availableOwners, setAvailableOwners] = useState<{ id: string; name: string; email: string }[]>([]);
 
   const [formData, setFormData] = useState<Company>({
     name: '',
@@ -81,12 +84,30 @@ export default function CompaniesPage() {
     size: 'small',
     status: 'prospect',
     source: '',
-    tags: []
+    tags: [],
+    owner_id: ''
   });
 
   useEffect(() => {
     loadCompanies();
+    loadAvailableOwners();
+    determineVisibilityScope();
   }, []);
+  
+  const determineVisibilityScope = () => {
+    if (!user) return;
+    
+    const roles = user.roles || [];
+    if (roles.includes('org_admin')) {
+      setVisibilityScope('All data (Admin)');
+    } else if (roles.includes('sales_manager')) {
+      setVisibilityScope('All team data (Sales Manager)');
+    } else if (roles.includes('account_manager')) {
+      setVisibilityScope('My accounts only');
+    } else {
+      setVisibilityScope('Limited access');
+    }
+  };
 
   const loadCompanies = async () => {
     try {
@@ -106,6 +127,36 @@ export default function CompaniesPage() {
       setCompanies(getMockCompanies());
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const loadAvailableOwners = async () => {
+    try {
+      // For now, create mock owners - in production, fetch from API
+      const mockOwners = [
+        { id: 'user_1', name: 'John Smith', email: 'john.smith@company.com' },
+        { id: 'user_2', name: 'Sarah Johnson', email: 'sarah.johnson@company.com' },
+        { id: 'user_3', name: 'Mike Wilson', email: 'mike.wilson@company.com' },
+        { id: 'user_4', name: 'Emily Davis', email: 'emily.davis@company.com' },
+      ];
+      
+      // If current user exists, add them to the list
+      if (user) {
+        const currentUserOwner = {
+          id: user.id,
+          name: user.full_name || user.email,
+          email: user.email
+        };
+        
+        // Check if not already in list
+        if (!mockOwners.find(o => o.id === user.id)) {
+          mockOwners.unshift(currentUserOwner);
+        }
+      }
+      
+      setAvailableOwners(mockOwners);
+    } catch (error) {
+      console.error('Error loading owners:', error);
     }
   };
 
@@ -276,7 +327,8 @@ export default function CompaniesPage() {
       size: 'small',
       status: 'prospect',
       source: '',
-      tags: []
+      tags: [],
+      owner_id: ''
     });
     setEditingCompany(null);
     setShowForm(false);
@@ -406,13 +458,19 @@ export default function CompaniesPage() {
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl font-bold text-gray-900">Companies</h1>
             <p className="text-gray-600 mt-1">
               {filteredCompanies.length} of {companies.length} companies
               {hasActiveFilters && ' (filtered)'}
             </p>
           </div>
+          {visibilityScope && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg mr-2">
+              <Shield className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">{visibilityScope}</span>
+            </div>
+          )}
           <div className="flex gap-2">
             {selectedCompanies.length > 0 && isAdmin && (
               <button
@@ -726,6 +784,21 @@ export default function CompaniesPage() {
                       placeholder="e.g., Website, Referral, Trade Show"
                       className="w-full border rounded px-3 py-2"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Owner</label>
+                    <select
+                      value={formData.owner_id || ''}
+                      onChange={(e) => setFormData({ ...formData, owner_id: e.target.value })}
+                      className="w-full border rounded px-3 py-2"
+                    >
+                      <option value="">Unassigned</option>
+                      {availableOwners.map(owner => (
+                        <option key={owner.id} value={owner.id}>
+                          {owner.name} ({owner.email})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Annual Revenue</label>

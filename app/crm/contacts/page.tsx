@@ -67,6 +67,8 @@ export default function ContactsPage() {
     spendingLimit: ''
   });
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [visibilityScope, setVisibilityScope] = useState<string>('');
+  const [availableOwners, setAvailableOwners] = useState<{ id: string; name: string; email: string }[]>([]);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -82,6 +84,7 @@ export default function ContactsPage() {
     city: '',
     state: '',
     country: 'USA',
+    owner_id: '',
   });
 
   // Lifecycle stages
@@ -123,7 +126,24 @@ export default function ContactsPage() {
 
   useEffect(() => {
     loadContacts();
+    loadAvailableOwners();
+    determineVisibilityScope();
   }, []);
+  
+  const determineVisibilityScope = () => {
+    if (!user) return;
+    
+    const roles = user.roles || [];
+    if (roles.includes('org_admin')) {
+      setVisibilityScope('All data (Admin)');
+    } else if (roles.includes('sales_manager')) {
+      setVisibilityScope('All team data (Sales Manager)');
+    } else if (roles.includes('account_manager')) {
+      setVisibilityScope('My accounts only');
+    } else {
+      setVisibilityScope('Limited access');
+    }
+  };
 
   useEffect(() => {
     filterContacts();
@@ -141,6 +161,36 @@ export default function ContactsPage() {
       console.error('Error loading contacts:', error);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const loadAvailableOwners = async () => {
+    try {
+      // For now, create mock owners - in production, fetch from API
+      const mockOwners = [
+        { id: 'user_1', name: 'John Smith', email: 'john.smith@company.com' },
+        { id: 'user_2', name: 'Sarah Johnson', email: 'sarah.johnson@company.com' },
+        { id: 'user_3', name: 'Mike Wilson', email: 'mike.wilson@company.com' },
+        { id: 'user_4', name: 'Emily Davis', email: 'emily.davis@company.com' },
+      ];
+      
+      // If current user exists, add them to the list
+      if (user) {
+        const currentUserOwner = {
+          id: user.id,
+          name: user.full_name || user.email,
+          email: user.email
+        };
+        
+        // Check if not already in list
+        if (!mockOwners.find(o => o.id === user.id)) {
+          mockOwners.unshift(currentUserOwner);
+        }
+      }
+      
+      setAvailableOwners(mockOwners);
+    } catch (error) {
+      console.error('Error loading owners:', error);
     }
   };
 
@@ -354,6 +404,7 @@ export default function ContactsPage() {
       city: '',
       state: '',
       country: 'USA',
+      owner_id: '',
     });
   };
 
@@ -387,9 +438,17 @@ export default function ContactsPage() {
     <CRMLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-600">Manage your contact database</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+            <p className="text-gray-600">Manage your contact database</p>
+          </div>
+          {visibilityScope && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg">
+              <Shield className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">{visibilityScope}</span>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -841,6 +900,23 @@ export default function ContactsPage() {
                     >
                       {sources.map(source => (
                         <option key={source.value} value={source.value}>{source.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Owner
+                    </label>
+                    <select
+                      value={formData.owner_id}
+                      onChange={(e) => setFormData({ ...formData, owner_id: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="">Unassigned</option>
+                      {availableOwners.map(owner => (
+                        <option key={owner.id} value={owner.id}>
+                          {owner.name} ({owner.email})
+                        </option>
                       ))}
                     </select>
                   </div>

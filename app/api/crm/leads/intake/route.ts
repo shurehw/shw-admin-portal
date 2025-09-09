@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { AuthService } from '@/lib/auth';
+import { filterDataByVisibility } from '@/lib/data-access';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,21 +12,21 @@ const supabase = createClient(
 // GET - Fetch lead intake queue
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') || 'pending';
+    const source = searchParams.get('source');
 
     const query = supabase
       .from('lead_intake')
-      .select(`
-        *,
-        company:companies(id, name, segment, sub_segment),
-        assigned_to:auth.users!assigned_to(email)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (status !== 'all') {
       query.eq('status', status);
+    }
+    
+    if (source && source !== 'all') {
+      query.eq('source', source);
     }
 
     const { data, error } = await query;
@@ -38,10 +40,42 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add new lead to intake queue
+// POST - Add new lead(s) to intake queue
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    
+    // Get current user from cookies/headers
+    const cookieStore = cookies();
+    const headersList = headers();
+    const userEmail = headersList.get('x-user-email') || cookieStore.get('userEmail')?.value || 'system';
+    const userName = headersList.get('x-user-name') || cookieStore.get('userName')?.value || 'System';
+    
+    // Check if this is a bulk import
+    if (body.bulk && body.leads && Array.isArray(body.leads)) {
+      const leadsToInsert = body.leads.map((lead: any) => ({
+        ...lead,
+        added_by: userEmail,
+        added_by_name: userName,
+        added_at: new Date().toISOString()
+      }));
+      
+      const { data, error } = await supabase
+        .from('lead_intake')
+        .insert(leadsToInsert)
+        .select();
+      
+      if (error) {
+        console.error('Error bulk importing leads:', error);
+        return NextResponse.json({ error: 'Failed to import leads' }, { status: 500 });
+      }
+      
+      return NextResponse.json({ 
+        success: true, 
+        imported: data?.length || 0,
+        leads: data 
+      });
+    }
     
     // Calculate initial scores
     const scorePreview = Math.floor(Math.random() * 60) + 40; // 40-100
@@ -51,7 +85,12 @@ export async function POST(request: NextRequest) {
       .from('lead_intake')
       .insert({
         source: body.source || 'manual',
-        raw: body,
+        raw: {
+          ...body,
+          added_by: userEmail,
+          added_by_name: userName,
+          added_at: new Date().toISOString()
+        },
         suggested_company: {
           name: body.companyName,
           legal_name: body.legalName,

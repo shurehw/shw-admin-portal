@@ -106,31 +106,33 @@ function calculateLeadScore(data: any) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { source = 'discovery', location = 'New York, NY', categories = ['restaurant', 'cafe', 'bakery', 'hotel'] } = body;
+    console.log('Discovery request body:', body);
+    const { source = 'mock', location = 'New York, NY', categories = ['restaurant', 'cafe', 'bakery', 'hotel'], preview = false } = body;
+    
+    // Check if this is a preview request
+    const isPreview = preview || request.nextUrl.searchParams.get('preview') === 'true';
     
     const discoveredLeads = [];
     
-    // Option 1: Use mock data for demonstration
-    const mockBusinesses = [
-      { name: "Bella Vista Restaurant", category: "restaurant", subCategory: "Fine Dining", city: "New York", state: "NY" },
-      { name: "Corner Café Express", category: "cafe", subCategory: "Coffee Shop", city: "Brooklyn", state: "NY" },
-      { name: "Artisan Flour Bakery", category: "bakery", subCategory: "Artisan Bakery", city: "Queens", state: "NY" },
-      { name: "The Grand Manhattan Hotel", category: "hotel", subCategory: "Luxury", city: "Manhattan", state: "NY" },
-      { name: "Sunset Terrace Dining", category: "restaurant", subCategory: "Casual Dining", city: "Long Island", state: "NY" },
-      { name: "Morning Brew Coffee Co", category: "cafe", subCategory: "Coffee Shop", city: "Staten Island", state: "NY" },
-      { name: "Fresh Daily Bakehouse", category: "bakery", subCategory: "Commercial Bakery", city: "Bronx", state: "NY" },
-      { name: "Harbor View Inn", category: "hotel", subCategory: "Boutique", city: "Manhattan", state: "NY" },
-      { name: "The Local Kitchen", category: "restaurant", subCategory: "Fast Casual", city: "Brooklyn", state: "NY" },
-      { name: "Elite Corporate Catering", category: "catering", subCategory: "Corporate", city: "Manhattan", state: "NY" }
-    ];
+    // Parse location to get city and state
+    const [cityName, stateName] = location.split(',').map(s => s.trim());
+    
+    // Generate location-specific mock businesses
+    const mockBusinesses = generateLocationSpecificBusinesses(cityName, stateName, categories);
     
     // Process each discovered business
     for (const business of mockBusinesses) {
       const signals = generateRARSignals();
       
+      // Store signals in raw data instead of as a separate field
+      const enrichedBusiness = {
+        ...business,
+        discovery_signals: signals
+      };
+      
       const leadData = {
         source: source,
-        raw: business,
+        raw: enrichedBusiness,
         suggested_company: {
           name: business.name,
           segment: business.category,
@@ -144,7 +146,6 @@ export async function POST(request: NextRequest) {
           formatted_address: `${Math.floor(Math.random() * 9999)} ${['Main', 'Broadway', 'Park', 'First', 'Second'][Math.floor(Math.random() * 5)]} ${['St', 'Ave', 'Blvd'][Math.floor(Math.random() * 3)]}, ${business.city}, ${business.state}`
         },
         suggested_contacts: [],
-        signals: signals,
         score_preview: 0,
         winability_preview: Math.floor(Math.random() * 30) + 70,
         status: 'pending'
@@ -171,7 +172,20 @@ export async function POST(request: NextRequest) {
       // Process Yelp results...
     }
     
+    // If preview mode, return leads without saving
+    if (isPreview) {
+      console.log('Preview mode: returning', discoveredLeads.length, 'leads without saving');
+      return NextResponse.json({
+        success: true,
+        discovered: discoveredLeads.length,
+        leads: discoveredLeads,
+        preview: true,
+        message: `Found ${discoveredLeads.length} potential leads (preview mode)`
+      });
+    }
+    
     // Insert discovered leads into database
+    console.log('Attempting to insert', discoveredLeads.length, 'leads with source:', source);
     const { data, error } = await supabase
       .from('lead_intake')
       .insert(discoveredLeads)
@@ -179,19 +193,102 @@ export async function POST(request: NextRequest) {
     
     if (error) {
       console.error('Error inserting leads:', error);
-      return NextResponse.json({ error: 'Failed to save leads' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to save leads',
+        details: error.message,
+        attempted: discoveredLeads.length 
+      }, { status: 500 });
     }
+    
+    console.log('Successfully inserted', data?.length, 'leads');
     
     return NextResponse.json({
       success: true,
       discovered: data?.length || 0,
-      leads: data
+      leads: data,
+      message: `Successfully discovered ${data?.length || 0} leads from ${source}`
     });
     
   } catch (error) {
     console.error('Discovery error:', error);
     return NextResponse.json({ error: 'Failed to discover leads' }, { status: 500 });
   }
+}
+
+// Generate location-specific businesses
+function generateLocationSpecificBusinesses(city: string, state: string, categories: string[]) {
+  const businessTemplates = {
+    restaurant: [
+      { prefix: "Bella Vista", type: "Restaurant", subCategory: "Fine Dining" },
+      { prefix: "Sunset Terrace", type: "Dining", subCategory: "Casual Dining" },
+      { prefix: "The Local", type: "Kitchen", subCategory: "Fast Casual" },
+      { prefix: "Golden Gate", type: "Grill", subCategory: "American" },
+      { prefix: "Blue Moon", type: "Bistro", subCategory: "French" }
+    ],
+    cafe: [
+      { prefix: "Corner", type: "Café Express", subCategory: "Coffee Shop" },
+      { prefix: "Morning Brew", type: "Coffee Co", subCategory: "Coffee Shop" },
+      { prefix: "Daily Grind", type: "Espresso Bar", subCategory: "Espresso Bar" },
+      { prefix: "Sunrise", type: "Coffee House", subCategory: "Coffee Shop" }
+    ],
+    bakery: [
+      { prefix: "Artisan Flour", type: "Bakery", subCategory: "Artisan Bakery" },
+      { prefix: "Fresh Daily", type: "Bakehouse", subCategory: "Commercial Bakery" },
+      { prefix: "Sweet Dreams", type: "Patisserie", subCategory: "French Bakery" }
+    ],
+    hotel: [
+      { prefix: "The Grand", type: "Hotel", subCategory: "Luxury" },
+      { prefix: "Harbor View", type: "Inn", subCategory: "Boutique" },
+      { prefix: "Plaza", type: "Suites", subCategory: "Business" },
+      { prefix: "Comfort", type: "Lodge", subCategory: "Mid-scale" }
+    ],
+    catering: [
+      { prefix: "Elite Corporate", type: "Catering", subCategory: "Corporate" },
+      { prefix: "Event Masters", type: "Catering Co", subCategory: "Events" }
+    ]
+  };
+  
+  // Location-specific neighborhoods based on city
+  const neighborhoods: Record<string, string[]> = {
+    'Los Angeles': ['Beverly Hills', 'Santa Monica', 'Hollywood', 'Venice', 'Downtown LA', 'Pasadena', 'Culver City', 'West Hollywood'],
+    'Chicago': ['The Loop', 'Lincoln Park', 'Wicker Park', 'River North', 'Gold Coast', 'Lakeview'],
+    'Houston': ['Downtown', 'The Heights', 'Montrose', 'River Oaks', 'Midtown', 'Galleria'],
+    'Phoenix': ['Downtown', 'Scottsdale', 'Tempe', 'Mesa', 'Chandler', 'Glendale'],
+    'Philadelphia': ['Center City', 'Old City', 'Rittenhouse', 'Fishtown', 'Manayunk'],
+    'San Antonio': ['Downtown', 'Pearl District', 'Alamo Heights', 'Stone Oak', 'The Rim'],
+    'San Diego': ['Gaslamp Quarter', 'La Jolla', 'Pacific Beach', 'North Park', 'Little Italy'],
+    'Dallas': ['Downtown', 'Uptown', 'Deep Ellum', 'Bishop Arts', 'Knox-Henderson'],
+    'Miami': ['South Beach', 'Brickell', 'Wynwood', 'Coral Gables', 'Coconut Grove'],
+    'Atlanta': ['Midtown', 'Buckhead', 'Virginia-Highland', 'Decatur', 'West Midtown'],
+    'Boston': ['Back Bay', 'Beacon Hill', 'North End', 'Seaport', 'Cambridge'],
+    'Seattle': ['Capitol Hill', 'Fremont', 'Ballard', 'Queen Anne', 'Georgetown'],
+    'Denver': ['LoDo', 'RiNo', 'Cherry Creek', 'Highland', 'Capitol Hill'],
+    'Portland': ['Pearl District', 'Hawthorne', 'Alberta', 'Sellwood', 'Northwest']
+  };
+  
+  const cityNeighborhoods = neighborhoods[city] || [city];
+  const businesses = [];
+  
+  // Generate businesses for selected categories
+  categories.forEach(category => {
+    const templates = businessTemplates[category as keyof typeof businessTemplates] || [];
+    const numBusinesses = Math.min(templates.length, Math.floor(Math.random() * 3) + 2);
+    
+    for (let i = 0; i < numBusinesses; i++) {
+      const template = templates[i % templates.length];
+      const neighborhood = cityNeighborhoods[Math.floor(Math.random() * cityNeighborhoods.length)];
+      
+      businesses.push({
+        name: `${template.prefix} ${template.type}`,
+        category: category,
+        subCategory: template.subCategory,
+        city: neighborhood === city ? city : neighborhood,
+        state: state
+      });
+    }
+  });
+  
+  return businesses;
 }
 
 // GET endpoint to trigger discovery

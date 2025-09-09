@@ -402,58 +402,68 @@ export async function POST(request: NextRequest) {
     enrichedLeads.sort((a, b) => b.score - a.score);
     
     // Convert to lead intake format
-    const leadsToInsert = enrichedLeads.slice(0, limit).map((lead: any) => ({
-      source: 'multi_source_discovery',
-      raw: lead,
-      suggested_company: {
-        name: lead.name,
-        legal_name: lead.clearbit?.legalName || lead.apollo?.company?.name,
-        website: lead.apollo?.company?.website || lead.clearbit?.domain,
-        phone: lead.apollo?.company?.phone || lead.yelp?.phone,
-        segment: categorizeBusinessType(
-          lead.apollo?.company?.industry || 
-          lead.yelp?.categories?.[0] || 
-          lead.clearbit?.category
-        ),
-        employee_count: lead.apollo?.company?.employeeCount || lead.clearbit?.employeeCount,
-        location_count: 1,
-        tech_stack: lead.clearbit?.techStack,
-        price_band: lead.yelp?.priceRange || '$$'
-      },
-      suggested_location: {
-        formatted_address: lead.yelp?.address || lead.apollo?.location?.address,
-        city: lead.apollo?.location?.city || lead.yelp?.city,
-        state: lead.apollo?.location?.state || lead.yelp?.state
-      },
-      suggested_contacts: [
-        ...(lead.apollo?.contact ? [{
-          firstName: lead.apollo.contact.firstName,
-          lastName: lead.apollo.contact.lastName,
-          title: lead.apollo.contact.title,
-          email: lead.apollo.contact.email,
-          phone: lead.apollo.contact.phone,
-          linkedIn: lead.apollo.contact.linkedIn
-        }] : []),
-        ...(lead.hunter?.emails?.slice(0, 2).map((email: any) => ({
-          email: email.value,
-          firstName: email.first_name,
-          lastName: email.last_name,
-          title: email.position
-        })) || [])
-      ],
-      score_preview: lead.score,
-      winability_preview: Math.floor(Math.random() * 20) + 70,
-      status: 'pending',
-      signals: [
+    const leadsToInsert = enrichedLeads.slice(0, limit).map((lead: any) => {
+      // Prepare signals for raw data
+      const discoverySignals = [
         ...(lead.apollo?.signals || []),
         ...(lead.yelp?.rating ? [`Yelp: ${lead.yelp.rating}★ (${lead.yelp.reviewCount} reviews)`] : []),
         ...(lead.clearbit?.raised ? [`Raised: ${lead.clearbit.raised}`] : [])
       ].map(signal => ({
         type: 'multi_source',
         value: { description: signal, confidence: 0.9 }
-      })),
-      data_sources: Object.keys(lead).filter(k => k !== 'name' && k !== 'score')
-    }));
+      }));
+
+      // Enrich raw data with discovery_signals
+      const enrichedRawData = {
+        ...lead,
+        discovery_signals: discoverySignals
+      };
+
+      return {
+        source: 'multi_source_discovery',
+        raw: enrichedRawData,
+        suggested_company: {
+          name: lead.name,
+          legal_name: lead.clearbit?.legalName || lead.apollo?.company?.name,
+          website: lead.apollo?.company?.website || lead.clearbit?.domain,
+          phone: lead.apollo?.company?.phone || lead.yelp?.phone,
+          segment: categorizeBusinessType(
+            lead.apollo?.company?.industry || 
+            lead.yelp?.categories?.[0] || 
+            lead.clearbit?.category
+          ),
+          employee_count: lead.apollo?.company?.employeeCount || lead.clearbit?.employeeCount,
+          location_count: 1,
+          tech_stack: lead.clearbit?.techStack,
+          price_band: lead.yelp?.priceRange || '$$'
+        },
+        suggested_location: {
+          formatted_address: lead.yelp?.address || lead.apollo?.location?.address,
+          city: lead.apollo?.location?.city || lead.yelp?.city,
+          state: lead.apollo?.location?.state || lead.yelp?.state
+        },
+        suggested_contacts: [
+          ...(lead.apollo?.contact ? [{
+            firstName: lead.apollo.contact.firstName,
+            lastName: lead.apollo.contact.lastName,
+            title: lead.apollo.contact.title,
+            email: lead.apollo.contact.email,
+            phone: lead.apollo.contact.phone,
+            linkedIn: lead.apollo.contact.linkedIn
+          }] : []),
+          ...(lead.hunter?.emails?.slice(0, 2).map((email: any) => ({
+            email: email.value,
+            firstName: email.first_name,
+            lastName: email.last_name,
+            title: email.position
+          })) || [])
+        ],
+        score_preview: lead.score,
+        winability_preview: Math.floor(Math.random() * 20) + 70,
+        status: 'pending',
+        data_sources: Object.keys(lead).filter(k => k !== 'name' && k !== 'score')
+      };
+    });
     
     // Insert into database
     const { data, error } = await supabase

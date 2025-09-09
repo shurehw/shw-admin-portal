@@ -53,9 +53,9 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
   ].filter(action => hasCapability(action.capability as any));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* CRM Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -204,7 +204,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 overflow-y-auto bg-gray-50">
         {children}
       </main>
       

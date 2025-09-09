@@ -250,10 +250,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       location = 'New York, NY',
+      radius,
+      categories,
+      minRating,
+      priceRange,
+      signals,
+      businessSize,
+      yearEstablished,
       includeClosures = false,
       minConfidence = 0.8,
-      daysBack = 30
+      daysBack = 30,
+      preview = false
     } = body;
+    
+    // Check if this is a preview request
+    const isPreview = preview || request.nextUrl.searchParams.get('preview') === 'true';
     
     console.log(`Fetching RAR signals for ${location}`);
     
@@ -261,7 +272,7 @@ export async function POST(request: NextRequest) {
     const rarSignals = await scrapeRAR(location);
     
     // Filter based on criteria
-    const filteredSignals = rarSignals.filter(signal => {
+    let filteredSignals = rarSignals.filter(signal => {
       if (!includeClosures && signal.type === 'closure') return false;
       if (signal.confidence < minConfidence) return false;
       
@@ -272,36 +283,89 @@ export async function POST(request: NextRequest) {
       return true;
     });
     
+    // Apply signal type filters if provided
+    if (signals && signals.length > 0) {
+      filteredSignals = filteredSignals.filter(signal => {
+        return signals.some((requestedSignal: string) => {
+          switch(requestedSignal) {
+            case 'newOpening':
+              return signal.type === 'pre_opening' || signal.type === 'new_opening';
+            case 'recentPermit':
+              return signal.type === 'permit';
+            case 'ownershipChange':
+              return signal.type === 'ownership_change';
+            case 'expansion':
+              return signal.type === 'renovation' && signal.details.toLowerCase().includes('expand');
+            case 'highGrowth':
+              return signal.confidence > 0.9; // High confidence signals indicate high growth potential
+            default:
+              return true;
+          }
+        });
+      });
+    }
+    
     // Convert to lead intake format
-    const leadsToInsert = filteredSignals.map(signal => ({
-      source: 'restaurant_activity_report',
-      raw: signal,
-      suggested_company: {
-        name: signal.businessName,
-        segment: 'restaurant',
-        sub_segment: determineSubSegment(signal.details),
-        signal_type: signal.type,
-        location_count: 1
-      },
-      suggested_location: {
-        formatted_address: `${signal.address}, ${signal.city}, ${signal.state}`,
-        city: signal.city,
-        state: signal.state
-      },
-      suggested_contacts: [], // RAR doesn't provide contact info
-      score_preview: calculateRARScore(signal),
-      winability_preview: signal.type === 'pre_opening' ? 95 : 
-                          signal.type === 'ownership_change' ? 90 : 75,
-      status: 'pending',
-      signals: [{
+    const leadsToInsert = filteredSignals.map(signal => {
+      // Prepare signals for raw data
+      const discoverySignals = [{
         type: `rar_${signal.type}`,
         value: {
           description: signal.details,
           date: signal.date,
           confidence: signal.confidence
         }
-      }]
-    }));
+      }];
+
+      // Enrich raw data with discovery_signals
+      const enrichedSignal = {
+        ...signal,
+        discovery_signals: discoverySignals
+      };
+
+      return {
+        source: 'restaurant_activity_report',
+        raw: enrichedSignal,
+        suggested_company: {
+          name: signal.businessName,
+          segment: 'restaurant',
+          sub_segment: determineSubSegment(signal.details),
+          signal_type: signal.type,
+          location_count: 1
+        },
+        suggested_location: {
+          formatted_address: `${signal.address}, ${signal.city}, ${signal.state}`,
+          city: signal.city,
+          state: signal.state
+        },
+        suggested_contacts: [], // RAR doesn't provide contact info
+        score_preview: calculateRARScore(signal),
+        winability_preview: signal.type === 'pre_opening' ? 95 : 
+                            signal.type === 'ownership_change' ? 90 : 75,
+        status: 'pending'
+      };
+    });
+    
+    // If preview mode, return leads without saving
+    if (isPreview) {
+      return NextResponse.json({
+        success: true,
+        discovered: leadsToInsert.length,
+        source: 'Restaurant Activity Report',
+        location: location,
+        signals_found: filteredSignals.length,
+        leads: leadsToInsert,
+        preview: true,
+        message: `Found ${leadsToInsert.length} RAR signals (preview mode)`,
+        signal_breakdown: {
+          pre_opening: filteredSignals.filter(s => s.type === 'pre_opening').length,
+          ownership_change: filteredSignals.filter(s => s.type === 'ownership_change').length,
+          renovation: filteredSignals.filter(s => s.type === 'renovation').length,
+          permits: filteredSignals.filter(s => s.type === 'permit').length,
+          liquor_license: filteredSignals.filter(s => s.type === 'liquor_license').length
+        }
+      });
+    }
     
     // Check for duplicates before inserting
     const existingCompanies = await supabase

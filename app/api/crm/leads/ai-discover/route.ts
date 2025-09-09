@@ -6,41 +6,81 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// OpenAI/Claude API for intelligent lead discovery
+// OpenAI/Claude API for intelligent lead discovery and refinement
 async function discoverWithAI(params: any) {
-  const { location, categories, context } = params;
+  const { location, categories, context, signals, businessSize, yearEstablished, existingLeads } = params;
   
-  // Use OpenAI or Claude to generate relevant business leads
+  // Use OpenAI to generate AND refine leads
   if (process.env.OPENAI_API_KEY) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a B2B lead generation expert for wholesale food/beverage suppliers targeting hospitality businesses. 
-            Generate realistic potential customer data for the ${location} area.
-            Focus on ${categories.join(', ')} businesses.
-            Include signals that indicate buying readiness (new opening, renovation, menu changes, expansion).
-            Return as JSON array with fields: name, segment, subSegment, address, city, state, signals, estimatedScore.`
-          },
-          {
-            role: 'user',
-            content: `Find 10 high-potential ${categories.join(', ')} businesses in ${location} that would likely need wholesale food/beverage supplies soon.`
-          }
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      })
-    });
-    
-    const data = await response.json();
-    return JSON.parse(data.choices[0].message.content).businesses || [];
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4-turbo-preview',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert B2B lead generation AI for a printing/packaging company targeting hospitality businesses.
+              
+              Your task is to:
+              1. Analyze business signals to identify high-value opportunities
+              2. Score leads based on urgency, value, and fit
+              3. Provide actionable insights for sales teams
+              
+              Focus on ${location} area, ${categories.join(', ')} businesses.
+              Prioritize: ${signals ? signals.join(', ') : 'all signals'}.
+              Business size preference: ${businessSize || 'all'}.
+              Year established: ${yearEstablished || 'any'}.
+              
+              Return JSON with structure:
+              {
+                "businesses": [
+                  {
+                    "name": "Business Name",
+                    "segment": "restaurant/cafe/bakery/hotel",
+                    "address": "Full address",
+                    "city": "City",
+                    "state": "State",
+                    "signals": ["signal1", "signal2"],
+                    "score": 0-100,
+                    "winability": 0-100,
+                    "urgency": "high/medium/low",
+                    "estimatedValue": "$X,XXX",
+                    "insights": "Why this is a good lead",
+                    "outreachTiming": "Best time to contact",
+                    "keyContacts": ["Owner: Name", "Manager: Name"]
+                  }
+                ]
+              }`
+            },
+            {
+              role: 'user',
+              content: existingLeads ? 
+                `Refine and enhance these leads with AI insights: ${JSON.stringify(existingLeads)}` :
+                `Discover 10 high-potential ${categories.join(', ')} businesses in ${location} showing ${signals ? signals.join(', ') : 'buying'} signals.`
+            }
+          ],
+          temperature: 0.7,
+          response_format: { type: "json_object" }
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('OpenAI API error:', await response.text());
+        return generateIntelligentLeads(location, categories);
+      }
+      
+      const data = await response.json();
+      const result = JSON.parse(data.choices[0].message.content);
+      return result.businesses || [];
+    } catch (error) {
+      console.error('AI discovery error:', error);
+      return generateIntelligentLeads(location, categories);
+    }
   }
   
   // Fallback to pattern-based generation
@@ -230,35 +270,42 @@ export async function POST(request: NextRequest) {
     }
     
     // Convert to lead intake format and insert
-    const leadsToInsert = discoveredBusinesses.slice(0, count).map((business: any) => ({
-      source: 'ai_discovery',
-      raw: {
-        discovered_at: new Date().toISOString(),
-        method: useAI ? 'ai_generated' : 'pattern_based',
-        location: location,
-        business: business
-      },
-      suggested_company: {
-        name: business.name,
-        segment: business.segment,
-        sub_segment: business.subSegment,
-        location_count: Math.floor(Math.random() * 3) + 1,
-        price_band: ['$', '$$', '$$$'][Math.floor(Math.random() * 3)]
-      },
-      suggested_location: {
-        formatted_address: `${business.address}, ${business.city}, ${business.state}`,
-        city: business.city,
-        state: business.state
-      },
-      suggested_contacts: generateContacts(business.segment),
-      score_preview: business.estimatedScore,
-      winability_preview: Math.floor(Math.random() * 20) + 70, // 70-90%
-      status: 'pending',
-      signals: business.signals?.map((s: string) => ({
-        type: business.signalType || 'discovery',
-        value: { description: s, confidence: 0.85 }
-      }))
-    }));
+    const leadsToInsert = discoveredBusinesses.slice(0, count).map((business: any) => {
+      // Enrich raw data with discovery_signals
+      const enrichedBusiness = {
+        ...business,
+        discovery_signals: business.signals?.map((s: string) => ({
+          type: business.signalType || 'discovery',
+          value: { description: s, confidence: 0.85 }
+        }))
+      };
+
+      return {
+        source: 'ai_discovery',
+        raw: {
+          discovered_at: new Date().toISOString(),
+          method: useAI ? 'ai_generated' : 'pattern_based',
+          location: location,
+          business: enrichedBusiness
+        },
+        suggested_company: {
+          name: business.name,
+          segment: business.segment,
+          sub_segment: business.subSegment,
+          location_count: Math.floor(Math.random() * 3) + 1,
+          price_band: ['$', '$$', '$$$'][Math.floor(Math.random() * 3)]
+        },
+        suggested_location: {
+          formatted_address: `${business.address}, ${business.city}, ${business.state}`,
+          city: business.city,
+          state: business.state
+        },
+        suggested_contacts: generateContacts(business.segment),
+        score_preview: business.estimatedScore,
+        winability_preview: Math.floor(Math.random() * 20) + 70, // 70-90%
+        status: 'pending'
+      };
+    });
     
     // Insert into database
     const { data, error } = await supabase

@@ -14,7 +14,8 @@ export interface User {
   id: string;
   email: string;
   full_name?: string;
-  role: 'admin' | 'sales_rep' | 'customer_service' | 'production' | 'art_team' | 'viewer';
+  role: 'admin' | 'sales_manager' | 'account_manager' | 'customer_service' | 'production' | 'art_team' | 'viewer';
+  roles?: string[]; // For multiple roles support
   department?: string;
   phone?: string;
   status: 'active' | 'inactive' | 'suspended';
@@ -298,9 +299,18 @@ export class MinimalContactService {
   }
 
   static async create(contact: Omit<MinimalContact, 'id' | 'created_at' | 'updated_at'>): Promise<MinimalContact> {
+    // If contact has a company but no owner, copy the company owner
+    let finalContact = { ...contact };
+    if (contact.company_id && !contact.owner_id) {
+      const company = await MinimalCompanyService.getById(contact.company_id);
+      if (company?.owner_id) {
+        finalContact.owner_id = company.owner_id;
+      }
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
-      .insert([contact])
+      .insert([finalContact])
       .select()
       .single();
 
@@ -313,9 +323,22 @@ export class MinimalContactService {
   }
 
   static async update(id: string, updates: Partial<MinimalContact>): Promise<MinimalContact> {
+    // If updating company_id and no owner is set, copy the company owner
+    let finalUpdates = { ...updates };
+    if (updates.company_id && !updates.owner_id) {
+      // Check if current contact has an owner
+      const currentContact = await MinimalContactService.getById(id);
+      if (!currentContact?.owner_id) {
+        const company = await MinimalCompanyService.getById(updates.company_id);
+        if (company?.owner_id) {
+          finalUpdates.owner_id = company.owner_id;
+        }
+      }
+    }
+    
     const { data, error } = await supabase
       .from('contacts')
-      .update(updates)
+      .update(finalUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -407,8 +430,27 @@ export class MinimalCompanyService {
       console.error('Error updating company:', error);
       throw error;
     }
+    
+    // If owner changed, optionally update all contacts without owners
+    if (updates.owner_id) {
+      await MinimalCompanyService.propagateOwnerToContacts(id, updates.owner_id);
+    }
 
     return data;
+  }
+  
+  static async propagateOwnerToContacts(companyId: string, ownerId: string): Promise<void> {
+    // Update all contacts of this company that don't have an owner
+    const { error } = await supabase
+      .from('contacts')
+      .update({ owner_id: ownerId })
+      .eq('company_id', companyId)
+      .is('owner_id', null);
+    
+    if (error) {
+      console.error('Error propagating owner to contacts:', error);
+      // Don't throw - this is an optional operation
+    }
   }
 
   static async delete(id: string): Promise<void> {
