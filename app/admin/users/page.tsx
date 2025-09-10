@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Search, Plus, Edit2, Trash2, Shield, Mail, Phone,
   User, Users, Building2, Calendar, CheckCircle, 
-  XCircle, AlertCircle, MoreVertical, Key, Loader2, Send, X
+  XCircle, AlertCircle, MoreVertical, Key, Loader2, Send
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -814,9 +814,9 @@ export default function UsersPage() {
                   setShowEditModal(false);
                   resetForm();
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
               >
-                <X className="h-5 w-5" />
+                ×
               </button>
             </div>
             <form onSubmit={handleEditUser}>
