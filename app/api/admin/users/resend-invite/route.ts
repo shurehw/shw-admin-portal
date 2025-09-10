@@ -35,15 +35,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check user role
+    // Check user role - allow admins and managers
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Only admins can resend invites' }, { status: 403 });
+    const isAuthorized = profile && ['admin', 'sales_manager', 'cs_manager', 'production_manager'].includes(profile.role);
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Only admins and managers can resend invites' }, { status: 403 });
     }
 
     // Get the invite details

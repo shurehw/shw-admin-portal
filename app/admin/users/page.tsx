@@ -35,9 +35,22 @@ export default function UsersPage() {
   const router = useRouter();
   const { user: currentUser, isAdmin } = useAuth();
   
-  // Check if user is a manager
-  const isManager = currentUser?.role?.includes('_manager');
+  // Check if user is a manager (safely check for role)
+  const isManager = currentUser?.role ? currentUser.role.includes('_manager') : false;
   const canManageUsers = isAdmin || isManager;
+  
+  // Helper function to check if current user can manage a specific user
+  const canManageUser = (user: UserType) => {
+    if (isAdmin) return true;
+    if (!isManager) return false;
+    
+    // Managers can only manage users in their department
+    const managerDepartment = currentUser?.role === 'sales_manager' ? 'sales' :
+                             currentUser?.role === 'cs_manager' ? 'customer_service' :
+                             currentUser?.role === 'production_manager' ? 'production' : null;
+    
+    return user.department === managerDepartment;
+  };
   const [users, setUsers] = useState<UserType[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserType[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
