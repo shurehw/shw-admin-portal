@@ -1042,7 +1042,8 @@ export default function UsersPage() {
 
                   setSaving(true);
                   try {
-                    const response = await fetch('/api/admin/users/send-invite', {
+                    // Use v2 endpoint that supports multiple email services
+                    const response = await fetch('/api/admin/users/send-invite-v2', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ invites: validInvites })
