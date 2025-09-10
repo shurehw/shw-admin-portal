@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import nodemailer from 'nodemailer';
 
 export async function POST(request: Request) {
   try {
@@ -71,13 +72,115 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to resend invite' }, { status: 500 });
     }
 
-    // In a production app, you would send the actual email here
-    // For now, we just update the timestamp
-
-    return NextResponse.json({ 
-      success: true,
-      message: `Invite resent to ${invite.email}`
+    // Send the invitation email
+    const transporter = nodemailer.createTransporter({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     });
+
+    // Get the app URL for the invite link
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+                   'http://localhost:3000';
+
+    const roleLabel = invite.role.replace('_', ' ').charAt(0).toUpperCase() + 
+                     invite.role.replace('_', ' ').slice(1);
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1e40af; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: white; padding: 30px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 24px; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280; }
+          .reminder { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Reminder: Welcome to SHW Admin Portal</h1>
+          </div>
+          <div class="content">
+            <h2>Your invitation is still waiting!</h2>
+            
+            <div class="reminder">
+              <strong>This is a reminder</strong> - You were previously invited to join the SHW Admin Portal.
+            </div>
+            
+            <p>You've been invited to join as a <strong>${roleLabel}</strong>.</p>
+            
+            <p>To get started, simply click the button below and sign in with your Google account using this email address (${invite.email}).</p>
+            
+            <p style="text-align: center;">
+              <a href="${appUrl}/admin/login" class="button">Accept Invitation & Sign In</a>
+            </p>
+            
+            <p><strong>What happens next?</strong></p>
+            <ul>
+              <li>Click the link above to go to the login page</li>
+              <li>Sign in with Google using your ${invite.email} email</li>
+              <li>Your account will be automatically created with the ${roleLabel} role</li>
+              <li>You'll have immediate access to the admin portal</li>
+            </ul>
+            
+            <div class="footer">
+              <p><strong>Need help?</strong> Contact your administrator or reply to this email.</p>
+              <p>This invitation reminder was sent by an administrator of the SHW Admin Portal.</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const emailText = `
+Reminder: Welcome to SHW Admin Portal!
+
+This is a reminder - You were previously invited to join the SHW Admin Portal as a ${roleLabel}.
+
+To get started, visit: ${appUrl}/admin/login
+
+Sign in with Google using your ${invite.email} email address.
+
+Your account will be automatically created with the ${roleLabel} role, and you'll have immediate access to the admin portal.
+
+Need help? Contact your administrator.
+    `;
+
+    try {
+      await transporter.sendMail({
+        from: `"${process.env.EMAIL_FROM_NAME || 'SHW Admin Portal'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER}>`,
+        to: invite.email,
+        subject: 'Reminder: Invitation to SHW Admin Portal',
+        text: emailText,
+        html: emailHtml,
+      });
+      console.log(`Invitation reminder sent to ${invite.email}`);
+      
+      return NextResponse.json({ 
+        success: true,
+        message: `Invite resent to ${invite.email}`,
+        emailSent: true
+      });
+    } catch (emailError) {
+      console.error(`Failed to send reminder email to ${invite.email}:`, emailError);
+      return NextResponse.json({ 
+        success: false,
+        message: `Failed to send email to ${invite.email}. Please check email configuration.`,
+        emailSent: false,
+        error: emailError
+      }, { status: 500 });
+    }
   } catch (error) {
     console.error('Error in resend invite API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
