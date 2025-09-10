@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Search, Plus, Edit2, Trash2, Shield, Mail, Phone,
   User, Users, Building2, Calendar, CheckCircle, 
-  XCircle, AlertCircle, MoreVertical, Key, Loader2, Send
+  XCircle, AlertCircle, MoreVertical, Key, Loader2, Send, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
