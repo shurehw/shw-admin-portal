@@ -179,6 +179,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           <Settings className="h-4 w-4 mr-2" />
                           Settings
                         </Link>
+                        <Link href="/admin/settings/email" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email Configuration
+                        </Link>
                         <Link href="/admin/settings/roles" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                           <Shield className="h-4 w-4 mr-2" />
                           Role Permissions
