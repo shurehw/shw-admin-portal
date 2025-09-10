@@ -194,8 +194,9 @@ export default function DiscoverLeadsPage() {
       const data = await response.json();
       
       if (data.success || data.leads) {
-        // Automatically enrich imported leads with Apollo data
-        if (data.leads && data.leads.length > 0) {
+        // Skip auto-enrichment if Apollo API key is not configured
+        // This prevents confusing mock data from being added
+        if (process.env.NEXT_PUBLIC_APOLLO_ENABLED === 'true' && data.leads && data.leads.length > 0) {
           console.log(`Auto-enriching ${data.leads.length} leads with Apollo data...`);
           
           // Enrich leads in parallel (max 3 at a time to avoid rate limiting)
@@ -233,6 +234,8 @@ export default function DiscoverLeadsPage() {
           }
           
           console.log('Auto-enrichment complete!');
+        } else {
+          console.log('Apollo enrichment skipped - API key not configured');
         }
         
         setShowModal(false);
@@ -937,11 +940,11 @@ export default function DiscoverLeadsPage() {
                   {importing ? (
                     <>
                       <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                      Importing & Enriching...
+                      Importing...
                     </>
                   ) : (
                     <>
-                      Add {selectedLeads.size} Selected Lead{selectedLeads.size !== 1 ? 's' : ''} & Auto-Enrich
+                      Add {selectedLeads.size} Selected Lead{selectedLeads.size !== 1 ? 's' : ''}
                     </>
                   )}
                 </button>

@@ -57,8 +57,9 @@ async function enrichWithApollo(companyName: string, domain?: string) {
   const apiKey = process.env.APOLLO_API_KEY;
   
   if (!apiKey) {
-    console.log('Apollo API key not configured - using mock data');
-    return getMockApolloData(companyName);
+    console.log('Apollo API key not configured - skipping enrichment');
+    // Return null to indicate no enrichment available
+    return null;
   }
   
   try {
@@ -226,6 +227,15 @@ export async function POST(request: NextRequest) {
     
     // Fetch fresh data from Apollo
     const apolloData = await enrichWithApollo(companyName, domain);
+    
+    // If no Apollo data available (no API key), return early
+    if (!apolloData) {
+      return NextResponse.json({
+        success: false,
+        error: 'Apollo API key not configured. Please add APOLLO_API_KEY to environment variables.',
+        message: 'Enrichment unavailable without Apollo API key'
+      }, { status: 400 });
+    }
     
     // Update lead with Apollo data
     const updatedRaw = {
