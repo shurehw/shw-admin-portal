@@ -8,7 +8,7 @@ import {
   Home, Building, FileText, Package, CreditCard, Users, 
   Settings, LogOut, Menu, X, Bell, Search, ChevronDown,
   BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy, DollarSign,
-  FilePlus, RefreshCw
+  FilePlus, RefreshCw, Archive
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     
     const salesNav = [
       { name: 'CRM Dashboard', href: '/crm', icon: UserCheck, roles: ['admin', 'sales_rep', 'customer_service'] },
+      { name: 'Limbo', href: '/limbo', icon: Archive, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
@@ -228,20 +229,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             })}
           </nav>
 
-          {/* Role Badge */}
-          <div className="absolute bottom-6 left-4 right-4">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <div className="flex items-center">
-                <Shield className="h-5 w-5 text-gray-400 mr-2" />
-                <div>
-                  <p className="text-xs text-gray-400">Access Level</p>
-                  <p className="text-sm font-medium text-white capitalize">
-                    {userRole.replace('_', ' ')}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* Main Content */}

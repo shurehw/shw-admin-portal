@@ -14,7 +14,7 @@ interface UserType {
   id: string;
   email: string;
   full_name?: string;
-  role: 'admin' | 'sales_rep' | 'customer_service' | 'production' | 'art_team' | 'viewer';
+  role: 'admin' | 'sales_rep' | 'sales_manager' | 'customer_service' | 'cs_manager' | 'production' | 'production_manager' | 'art_team' | 'viewer';
   department?: string;
   phone?: string;
   status: 'active' | 'inactive' | 'suspended' | 'pending';
@@ -34,6 +34,10 @@ interface PendingInvite {
 export default function UsersPage() {
   const router = useRouter();
   const { user: currentUser, isAdmin } = useAuth();
+  
+  // Check if user is a manager
+  const isManager = currentUser?.role?.includes('_manager');
+  const canManageUsers = isAdmin || isManager;
   const [users, setUsers] = useState<UserType[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserType[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
@@ -59,8 +63,11 @@ export default function UsersPage() {
 
   const roles = [
     { value: 'admin', label: 'Administrator', color: 'bg-purple-100 text-purple-800' },
+    { value: 'sales_manager', label: 'Sales Manager', color: 'bg-indigo-100 text-indigo-800' },
     { value: 'sales_rep', label: 'Sales Representative', color: 'bg-blue-100 text-blue-800' },
+    { value: 'cs_manager', label: 'CS Manager', color: 'bg-teal-100 text-teal-800' },
     { value: 'customer_service', label: 'Customer Service', color: 'bg-green-100 text-green-800' },
+    { value: 'production_manager', label: 'Production Manager', color: 'bg-orange-100 text-orange-800' },
     { value: 'production', label: 'Production', color: 'bg-yellow-100 text-yellow-800' },
     { value: 'art_team', label: 'Art Team', color: 'bg-pink-100 text-pink-800' },
     { value: 'viewer', label: 'Viewer', color: 'bg-gray-100 text-gray-800' }
@@ -483,14 +490,20 @@ export default function UsersPage() {
             </select>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">Your role: {currentUser?.role || 'loading'}</span>
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-            >
-              <Send className="h-5 w-5" />
-              Invite Users
-            </button>
+            {currentUser && (
+              <span className="text-sm text-gray-500">
+                Your role: {roles.find(r => r.value === currentUser.role)?.label || currentUser.role || 'Unknown'}
+              </span>
+            )}
+            {canManageUsers && (
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+              >
+                <Send className="h-5 w-5" />
+                Invite Users
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -527,7 +540,15 @@ export default function UsersPage() {
               const roleConfig = getRoleBadge(user.role);
 
               return (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr 
+                  key={user.id} 
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    if (!user.isPendingInvite && canManageUser(user)) {
+                      openEditModal(user);
+                    }
+                  }}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
@@ -581,53 +602,66 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      {isAdmin && (
+                      {user.isPendingInvite ? (
+                        // Actions for pending invites
                         <>
-                          {user.isPendingInvite ? (
-                            // Actions for pending invites
-                            <>
-                              <button
-                                onClick={() => handleResendInvite(user.id, user.email)}
-                                className="text-blue-600 hover:text-blue-900"
-                                title="Resend invite"
-                              >
-                                <Send className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-900"
-                                title="Cancel invite"
-                              >
-                                <XCircle className="h-4 w-4" />
-                              </button>
-                            </>
-                          ) : (
-                            // Actions for existing users
-                            <>
-                              <button
-                                onClick={() => openEditModal(user)}
-                                className="text-blue-600 hover:text-blue-900"
-                                title="Edit user"
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleResetPassword(user.id)}
-                                className="text-yellow-600 hover:text-yellow-900"
-                                title="Reset password"
-                              >
-                                <Key className="h-4 w-4" />
-                              </button>
-                              {user.id !== currentUser?.id && (
-                                <button
-                                  onClick={() => handleDeleteUser(user.id)}
-                                  className="text-red-600 hover:text-red-900"
-                                  title="Delete user"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              )}
-                            </>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleResendInvite(user.id, user.email);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Resend invite"
+                          >
+                            <Send className="h-4 w-4" />
+                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(user.id);
+                              }}
+                              className="text-red-600 hover:text-red-900"
+                              title="Cancel invite"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        // Actions for existing users
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(user);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Edit user"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleResetPassword(user.id);
+                            }}
+                            className="text-yellow-600 hover:text-yellow-900"
+                            title="Reset password"
+                          >
+                            <Key className="h-4 w-4" />
+                          </button>
+                          {isAdmin && user.id !== currentUser?.id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(user.id);
+                              }}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete user"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           )}
                         </>
                       )}
@@ -702,12 +736,19 @@ export default function UsersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Department
                   </label>
-                  <input
-                    type="text"
-                    value={formData.department}
+                  <select
+                    value={formData.department || ''}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                  />
+                    disabled={!isAdmin}
+                  >
+                    <option value="">Not assigned</option>
+                    <option value="sales">Sales</option>
+                    <option value="customer_service">Customer Service</option>
+                    <option value="production">Production</option>
+                    <option value="art">Art</option>
+                    <option value="admin">Administration</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -751,7 +792,18 @@ export default function UsersPage() {
       {showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Edit User</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Edit User</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             <form onSubmit={handleEditUser}>
               <div className="space-y-4">
                 <div>
@@ -794,12 +846,19 @@ export default function UsersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Department
                   </label>
-                  <input
-                    type="text"
-                    value={formData.department}
+                  <select
+                    value={formData.department || ''}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                  />
+                    disabled={!isAdmin}
+                  >
+                    <option value="">Not assigned</option>
+                    <option value="sales">Sales</option>
+                    <option value="customer_service">Customer Service</option>
+                    <option value="production">Production</option>
+                    <option value="art">Art</option>
+                    <option value="admin">Administration</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -898,11 +957,27 @@ export default function UsersPage() {
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     >
-                      {roles.map(role => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
-                      ))}
+                      {roles
+                        .filter(role => {
+                          // Admins can assign any role
+                          if (isAdmin) return true;
+                          // Managers can only assign roles in their department
+                          if (currentUser?.role === 'sales_manager') {
+                            return ['sales_rep', 'viewer'].includes(role.value);
+                          }
+                          if (currentUser?.role === 'cs_manager') {
+                            return ['customer_service', 'viewer'].includes(role.value);
+                          }
+                          if (currentUser?.role === 'production_manager') {
+                            return ['production', 'art_team', 'viewer'].includes(role.value);
+                          }
+                          return false;
+                        })
+                        .map(role => (
+                          <option key={role.value} value={role.value}>
+                            {role.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                   

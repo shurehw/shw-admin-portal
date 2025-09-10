@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase-client';
 import { collection, addDoc } from 'firebase/firestore';
 import crypto from 'crypto';
+import logger from '@/lib/logger';
 
 interface TicketWebhookPayload {
   eventType: string;
@@ -33,16 +34,26 @@ interface TicketWebhookPayload {
 
 function verifyWebhookSignature(body: string, signature: string): boolean {
   if (!process.env.WEBHOOK_SECRET) {
-    console.warn('WEBHOOK_SECRET not configured, skipping signature verification');
-    return true;
+    logger.warn('WEBHOOK_SECRET not configured - webhook verification disabled. Add WEBHOOK_SECRET to .env for security.');
+    return true; // Allow in development, but log warning
   }
 
   const expectedSignature = crypto
     .createHmac('sha256', process.env.WEBHOOK_SECRET)
     .update(body)
     .digest('hex');
-    
-  return `sha256=${expectedSignature}` === signature;
+  
+  const expectedSig = `sha256=${expectedSignature}`;
+  
+  // Use timing-safe comparison to prevent timing attacks
+  if (expectedSig.length !== signature.length) {
+    return false;
+  }
+  
+  return crypto.timingSafeEqual(
+    Buffer.from(expectedSig),
+    Buffer.from(signature)
+  );
 }
 
 function formatEventMessage(eventType: string, payload: TicketWebhookPayload): string {
@@ -128,14 +139,14 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook signature
     if (signature && !verifyWebhookSignature(body, signature)) {
-      console.error('Webhook signature verification failed');
+      logger.error('Webhook signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const payload: TicketWebhookPayload = JSON.parse(body);
     const { eventType, ticketId, timestamp, data } = payload;
 
-    console.log(`Received ticket webhook: ${eventType} for ticket ${ticketId}`);
+    logger.info(`Received ticket webhook: ${eventType} for ticket ${ticketId}`);
 
     // Create timeline events for relevant entities
     const timelineEvents: any[] = [];
@@ -194,9 +205,9 @@ export async function POST(request: NextRequest) {
     for (const event of timelineEvents) {
       try {
         await addDoc(collection(db, 'crm_timeline_events'), event);
-        console.log(`Created timeline event for ${event.entityType}:${event.entityId}`);
+        logger.debug(`Created timeline event for ${event.entityType}:${event.entityId}`);
       } catch (error) {
-        console.error('Error saving timeline event:', error);
+        logger.error('Error saving timeline event:', error);
       }
     }
 
@@ -204,11 +215,11 @@ export async function POST(request: NextRequest) {
     // This would trigger a cache refresh for the ticketing widgets
     if (data.ticket?.companyId) {
       // In a real implementation, you might use Redis or another cache invalidation mechanism
-      console.log(`Invalidating cache for company: ${data.ticket.companyId}`);
+      logger.debug(`Invalidating cache for company: ${data.ticket.companyId}`);
     }
     
     if (data.ticket?.contactId) {
-      console.log(`Invalidating cache for contact: ${data.ticket.contactId}`);
+      logger.debug(`Invalidating cache for contact: ${data.ticket.contactId}`);
     }
 
     return NextResponse.json({ 
@@ -217,7 +228,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error processing ticket webhook:', error);
+    logger.error('Error processing ticket webhook:', error);
     return NextResponse.json({ 
       error: error.message 
     }, { status: 500 });

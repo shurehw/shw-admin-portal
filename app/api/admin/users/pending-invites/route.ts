@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const cookieStore = await cookies();
@@ -34,7 +36,31 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch pending invites' }, { status: 500 });
     }
 
-    return NextResponse.json(invites || []);
+    // Get all existing user emails to filter out invites for users who already signed up
+    const { data: existingUsers } = await supabase
+      .from('user_profiles')
+      .select('email');
+
+    const existingEmails = new Set(existingUsers?.map(u => u.email.toLowerCase()) || []);
+
+    // Filter out invites for users who already exist
+    const activeInvites = (invites || []).filter(
+      invite => !existingEmails.has(invite.email.toLowerCase())
+    );
+
+    // Clean up database by removing invites for users who already signed up
+    const invitesToRemove = (invites || []).filter(
+      invite => existingEmails.has(invite.email.toLowerCase())
+    );
+
+    if (invitesToRemove.length > 0) {
+      await supabase
+        .from('pending_invites')
+        .delete()
+        .in('id', invitesToRemove.map(i => i.id));
+    }
+
+    return NextResponse.json(activeInvites);
   } catch (error) {
     console.error('Error in pending invites API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

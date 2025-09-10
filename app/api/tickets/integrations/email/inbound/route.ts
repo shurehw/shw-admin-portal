@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
+import logger from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
@@ -170,20 +171,41 @@ async function applyRoutingRules(ticketData: any): Promise<any> {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook signature (implement based on your email provider)
+    // Get webhook signature and body
     const signature = request.headers.get('x-webhook-signature');
     const body = await request.text();
     
-    // TODO: Implement signature verification based on your email provider
-    // const expectedSignature = crypto.createHmac('sha256', process.env.EMAIL_WEBHOOK_SECRET!)
-    //   .update(body)
-    //   .digest('hex');
+    // Verify webhook signature if secret is configured
+    if (process.env.EMAIL_WEBHOOK_SECRET) {
+      if (!signature) {
+        logger.error('Missing webhook signature');
+        return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+      }
+      
+      const crypto = require('crypto');
+      const expectedSignature = crypto
+        .createHmac('sha256', process.env.EMAIL_WEBHOOK_SECRET)
+        .update(body)
+        .digest('hex');
+      
+      // Compare signatures in a timing-safe manner
+      const providedSignature = signature.replace('sha256=', '');
+      if (!crypto.timingSafeEqual(
+        Buffer.from(expectedSignature),
+        Buffer.from(providedSignature)
+      )) {
+        logger.error('Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    } else {
+      logger.warn('EMAIL_WEBHOOK_SECRET not configured - skipping signature verification');
+    }
     
     const emailData: InboundEmail = JSON.parse(body);
     
     // Check if email is from an allowed domain
     if (!isFromAllowedDomain(emailData.from)) {
-      console.log(`Ignoring email from non-allowed domain: ${emailData.from}`);
+      logger.info(`Ignoring email from non-allowed domain: ${emailData.from}`);
       return NextResponse.json({ success: true, action: 'ignored' });
     }
 
@@ -347,7 +369,7 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error: any) {
-    console.error('Error processing inbound email:', error);
+    logger.error('Error processing inbound email:', error);
     return NextResponse.json({ 
       success: false, 
       error: error.message 

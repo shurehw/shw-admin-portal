@@ -28,6 +28,8 @@ interface Task {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<{id: string, name: string}[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [filter, setFilter] = useState<{
     status: string;
     priority: string;
@@ -42,7 +44,35 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks();
+    loadUsers();
+    // Get current user from localStorage
+    if (typeof window !== 'undefined') {
+      const userId = localStorage.getItem('userId') || '';
+      setCurrentUserId(userId);
+    }
+  }, []);
+  
+  useEffect(() => {
+    loadTasks();
   }, [filter]);
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/users');
+      if (response.ok) {
+        const data = await response.json();
+        const formattedUsers = data.map((user: any) => ({
+          id: user.id,
+          name: user.full_name || user.email || 'Unknown User'
+        }));
+        setUsers(formattedUsers);
+      } else {
+        console.error('Failed to load users');
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
 
   const loadTasks = async () => {
     try {
@@ -134,7 +164,10 @@ export default function TasksPage() {
       
       if (filter.owner !== 'all') {
         if (filter.owner === 'me') {
-          filteredTasks = filteredTasks.filter(task => task.owner_id === 'user1');
+          filteredTasks = filteredTasks.filter(task => task.owner_id === currentUserId);
+        } else {
+          // Filter by specific user ID
+          filteredTasks = filteredTasks.filter(task => task.owner_id === filter.owner);
         }
       }
       
@@ -281,7 +314,11 @@ export default function TasksPage() {
           >
             <option value="all">All Owners</option>
             <option value="me">My Tasks</option>
-            {/* TODO: Add actual users */}
+            {users.map(user => (
+              <option key={user.id} value={user.id}>
+                {user.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
