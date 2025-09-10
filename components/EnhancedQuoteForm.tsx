@@ -81,11 +81,24 @@ export default function EnhancedQuoteForm() {
     }
   ]);
   
+  // Get current user from localStorage or use defaults
+  const getCurrentUser = () => {
+    if (typeof window !== 'undefined') {
+      const userName = localStorage.getItem('userName') || 'Current User';
+      const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
+      const userId = localStorage.getItem('userId') || `user-${Date.now()}`;
+      return { userName, userEmail, userId };
+    }
+    return { userName: 'Current User', userEmail: 'user@example.com', userId: `user-${Date.now()}` };
+  };
+
+  const currentUser = getCurrentUser();
+  
   const [responsibleParty, setResponsibleParty] = useState<ResponsibleParty>({
     customerId: '',
     customerName: '',
-    salesRep: 'Current User', // Auto-populate with logged-in user
-    salesRepId: 'current-user-id' // TODO: Get from auth context
+    salesRep: currentUser.userName,
+    salesRepId: currentUser.userId
   });
   
   const [customers, setCustomers] = useState<Customer[]>([]);
