@@ -66,25 +66,34 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    const contact = await MinimalContactService.create({
-      email: body.email,
-      first_name: body.first_name,
-      last_name: body.last_name,
-      job_title: body.job_title,
-      phone: body.phone,
-      mobile_phone: body.mobile,
+    // Create contact with required fields only
+    // The service will add created_at and updated_at automatically
+    const contactData = {
+      email: body.email || '',
+      first_name: body.first_name || '',
+      last_name: body.last_name || '',
+      job_title: body.job_title || '',
+      phone: body.phone || '',
+      mobile_phone: body.mobile || '',
       lifecycle_stage: body.lifecycle_stage || 'lead',
-      lead_status: body.lead_status,
-      company_id: body.company_id,
-      owner_id: body.owner_id, // Add owner_id
-      props: {},
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+      lead_status: body.lead_status || 'new',
+      company_id: body.company_id || body.company || null,
+      owner_id: body.owner_id || null,
+      props: body.props || {},
+      tags: body.tags || []
+    };
+
+    console.log('Creating contact with data:', contactData);
+    
+    const contact = await MinimalContactService.create(contactData);
 
     return NextResponse.json(contact);
   } catch (error) {
-    console.error('Error creating contact:', error);
-    return NextResponse.json({ error: 'Failed to create contact' }, { status: 500 });
+    console.error('Error creating contact - Details:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ 
+      error: 'Failed to create contact',
+      details: errorMessage 
+    }, { status: 500 });
   }
 }
