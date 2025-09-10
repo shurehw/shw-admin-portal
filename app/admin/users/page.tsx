@@ -693,7 +693,19 @@ export default function UsersPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Add New User</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Add New User</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
             <form onSubmit={handleAddUser}>
               <div className="space-y-4">
                 <div>
@@ -941,10 +953,22 @@ export default function UsersPage() {
       {showInviteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              Invite Team Members
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Invite Team Members
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteEmails([{ email: '', role: 'viewer' }]);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
             <p className="text-gray-600 mb-4">
               Send email invitations to team members. They'll receive a link to sign in with Google.
             </p>
