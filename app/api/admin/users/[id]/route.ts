@@ -113,15 +113,38 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check user role
+    // Check user role and permissions
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('role')
+      .select('role, department')
       .eq('user_id', user.id)
       .single();
 
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Only admins can update users' }, { status: 403 });
+    const isAdmin = profile?.role === 'admin';
+    const isManager = ['sales_manager', 'cs_manager', 'production_manager'].includes(profile?.role || '');
+    
+    if (!profile || (!isAdmin && !isManager)) {
+      return NextResponse.json({ error: 'Only admins and managers can update users' }, { status: 403 });
+    }
+    
+    // If user is a manager, check if they can edit this specific user
+    if (isManager && !isAdmin) {
+      // Get the target user's department
+      const { data: targetUser } = await supabase
+        .from('user_profiles')
+        .select('department')
+        .eq('user_id', params.id)
+        .single();
+      
+      // Managers can only edit users in their department
+      if (targetUser?.department !== profile.department) {
+        return NextResponse.json({ error: 'Managers can only edit users in their department' }, { status: 403 });
+      }
+      
+      // Managers cannot change users to admin role
+      if (body.role === 'admin') {
+        return NextResponse.json({ error: 'Only admins can assign admin role' }, { status: 403 });
+      }
     }
 
     // Update user profile

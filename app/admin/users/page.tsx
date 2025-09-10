@@ -181,12 +181,14 @@ export default function UsersPage() {
 
   const handleEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin) {
-      alert('Only administrators can edit users');
+    
+    // Check if user can edit
+    if (!selectedUser) return;
+    
+    if (!canManageUser(selectedUser)) {
+      alert('You do not have permission to edit this user');
       return;
     }
-
-    if (!selectedUser) return;
 
     setSaving(true);
     try {
@@ -837,9 +839,19 @@ export default function UsersPage() {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserType['role'] })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
                   >
-                    {roles.map(role => (
-                      <option key={role.value} value={role.value}>{role.label}</option>
-                    ))}
+                    {roles
+                      .filter(role => {
+                        // Admins can assign any role
+                        if (isAdmin) return true;
+                        // Managers cannot assign admin or other manager roles
+                        if (isManager) {
+                          return !['admin', 'sales_manager', 'cs_manager', 'production_manager'].includes(role.value);
+                        }
+                        return false;
+                      })
+                      .map(role => (
+                        <option key={role.value} value={role.value}>{role.label}</option>
+                      ))}
                   </select>
                 </div>
                 <div>
