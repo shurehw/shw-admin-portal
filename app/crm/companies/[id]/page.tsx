@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import CompanyTicketsCard from '@/components/crm/CompanyTicketsCard';
 import TicketsTab from '@/components/crm/TicketsTab';
 import TimelineEvents from '@/components/crm/TimelineEvents';
@@ -192,26 +191,25 @@ export default function CompanyDetailPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading company...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   if (!company) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-red-600">Company not found</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -535,6 +533,5 @@ export default function CompanyDetailPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }

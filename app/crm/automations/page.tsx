@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Zap, Plus, Play, Pause, Edit2, Trash2, Copy, 
   Settings, Filter, Search, ChevronRight, AlertCircle,
@@ -687,16 +686,15 @@ export default function AutomationsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-screen">
           <div className="text-lg">Loading automations...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -1362,6 +1360,5 @@ export default function AutomationsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

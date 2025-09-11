@@ -12,7 +12,6 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import CRMLayout from '@/components/CRMLayout';
 
 interface Contact {
   id: string;
@@ -426,16 +425,15 @@ export default function ContactsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-start">
@@ -1422,6 +1420,5 @@ export default function ContactsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

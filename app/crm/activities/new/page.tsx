@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { ArrowLeft, Save, Calendar, Clock, User, FileText, Building2, Search } from 'lucide-react';
 import { db } from '@/lib/firebase-client';
 import { collection, addDoc, Timestamp, getDocs } from 'firebase/firestore';
@@ -142,7 +141,6 @@ export default function NewActivityPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
           <button
@@ -411,6 +409,5 @@ export default function NewActivityPage() {
           </div>
         </form>
       </div>
-    </CRMLayout>
   );
 }

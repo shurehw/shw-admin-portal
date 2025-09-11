@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { ArrowLeft, Send, Mail, Paperclip, User } from 'lucide-react';
 import { db } from '@/lib/firebase-client';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
@@ -52,7 +51,6 @@ export default function EmailCommunicationPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
           <button
@@ -211,6 +209,5 @@ export default function EmailCommunicationPage() {
           </div>
         </form>
       </div>
-    </CRMLayout>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { ArrowLeft, Save, DollarSign, Calendar, User, Briefcase } from 'lucide-react';
 import { db } from '@/lib/firebase-client';
 import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
@@ -128,7 +127,6 @@ export default function NewDealPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="max-w-4xl mx-auto p-6">
         <div className="mb-6">
           <button
@@ -352,6 +350,5 @@ export default function NewDealPage() {
           </div>
         </form>
       </div>
-    </CRMLayout>
   );
 }

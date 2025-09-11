@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Star, Save, Plus, Trash2, Edit2, X, 
   Building, Mail, Phone, MessageSquare, Settings
@@ -128,7 +127,6 @@ export default function CustomerRankingSettings() {
   const [editRankData, setEditRankData] = useState<CustomerRank | null>(null);
 
   return (
-    <CRMLayout>
       <div className="p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Customer Ranking Settings</h1>
@@ -568,6 +566,5 @@ export default function CustomerRankingSettings() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

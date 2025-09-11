@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import CRMLayout from '@/components/CRMLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Search, Plus, Filter, Download, Upload, Mail, Phone, 
@@ -464,16 +463,13 @@ export default function CompaniesPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading companies...</div>
-        </div>
-      </CRMLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading companies...</div>
+      </div>
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -1585,6 +1581,5 @@ export default function CompaniesPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

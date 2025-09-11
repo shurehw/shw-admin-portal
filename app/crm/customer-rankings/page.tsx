@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Star, Users, Calendar, Mail, Phone, MessageSquare, 
   Building, TrendingUp, DollarSign, Clock, Bell,
@@ -224,7 +223,6 @@ export default function CustomerRankingsPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
@@ -753,6 +751,5 @@ export default function CustomerRankingsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

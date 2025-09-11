@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import DynamicForm from '@/components/DynamicForm';
 import { MinimalCompanyService, MinimalCompany } from '@/lib/supabase';
 import { FieldDefinitionService } from '@/lib/field-definitions';
@@ -90,7 +89,6 @@ export default function NewCompanyPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
@@ -159,6 +157,5 @@ export default function NewCompanyPage() {
           </p>
         </div>
       </div>
-    </CRMLayout>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   BarChart3, TrendingUp, DollarSign, Users, Building2, 
   Calendar, Download, Filter, RefreshCw, Target, 
@@ -254,11 +253,11 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading reports...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
@@ -268,7 +267,6 @@ export default function ReportsPage() {
   const monthlyTrends = getMonthlyTrends();
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -630,6 +628,5 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

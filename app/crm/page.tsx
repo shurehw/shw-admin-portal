@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Users, Building, Target, CheckSquare, Activity, 
   Calendar, Bell, Star, Phone, Mail, Clock,
@@ -127,7 +126,6 @@ export default function MyDayPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6 space-y-6">
         {/* Header with Welcome Message */}
         <div className="flex justify-between items-start">
@@ -463,6 +461,5 @@ export default function MyDayPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Plus, Edit2, Trash2, GripVertical, Settings, 
   ChevronRight, Save, X, ArrowUp, ArrowDown, ArrowLeft
@@ -245,16 +244,15 @@ export default function PipelinesSettingsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading pipelines...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header with Back Button */}
         <div className="mb-6">
@@ -590,6 +588,5 @@ export default function PipelinesSettingsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

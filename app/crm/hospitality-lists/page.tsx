@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Users, Search, Filter, Plus, Download, Upload, 
   Building2, MapPin, DollarSign, TrendingUp, Target,
@@ -203,7 +202,6 @@ export default function HospitalityListsPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -357,6 +355,5 @@ export default function HospitalityListsPage() {
           )}
         </div>
       </div>
-    </CRMLayout>
   );
 }

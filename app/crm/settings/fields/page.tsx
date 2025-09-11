@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { FieldDefinition, FieldDefinitionService } from '@/lib/field-definitions';
 import { 
   Plus, Edit2, Trash2, Eye, EyeOff, Lock, Settings, 
@@ -199,7 +198,6 @@ export default function FieldsSettingsPage() {
   const currentFields = activeTab === 'contact' ? contactFields : companyFields;
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
@@ -518,6 +516,5 @@ export default function FieldsSettingsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

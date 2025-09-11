@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import {
@@ -469,7 +468,6 @@ export default function SmartLeadsPage() {
   ];
 
   return (
-    <CRMLayout>
       <div className="p-6">
           {/* Header */}
           <div className="mb-6">
@@ -1253,6 +1251,5 @@ export default function SmartLeadsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

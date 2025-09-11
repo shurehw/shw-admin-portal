@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { ArrowLeft, Save, Building2, User, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 
@@ -95,7 +94,6 @@ export default function NewLeadPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -415,6 +413,5 @@ export default function NewLeadPage() {
           </div>
         </form>
       </div>
-    </CRMLayout>
   );
 }

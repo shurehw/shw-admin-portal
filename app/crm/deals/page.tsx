@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Plus, Search, Filter, Download, Edit2, Trash2, Eye, 
   DollarSign, Calendar, Target, TrendingUp, Building2,
@@ -435,16 +434,15 @@ export default function DealsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading deals...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -917,6 +915,5 @@ export default function DealsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

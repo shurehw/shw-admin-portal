@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Users, Search, Filter, Plus, Download, Upload, Save, 
   Building2, MapPin, DollarSign, TrendingUp, Target,
@@ -706,16 +705,15 @@ export default function HospitalityListBuilderPage() {
 
   if (loading && !selectedList) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar - Lists */}
         <div className="w-80 bg-white border-r flex flex-col">
@@ -1122,6 +1120,5 @@ export default function HospitalityListBuilderPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

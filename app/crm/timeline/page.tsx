@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   User, Building2, Phone, Mail, Calendar, MessageSquare,
   FileText, DollarSign, MapPin, Clock, CheckCircle2,
@@ -98,16 +97,15 @@ function TimelineContent() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -219,7 +217,6 @@ function TimelineContent() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }
 

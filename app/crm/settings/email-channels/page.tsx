@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Mail, Plus, Settings, Trash2, CheckCircle, XCircle, 
   RefreshCw, Link2, Unlink, AlertCircle, Loader2, 
@@ -168,7 +167,6 @@ export default function EmailChannelsPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
@@ -443,6 +441,5 @@ export default function EmailChannelsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

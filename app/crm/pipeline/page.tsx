@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Plus, Search, Filter, MoreVertical, DollarSign, Calendar, 
   Building2, User, Phone, Mail, Clock, MapPin, Edit2, Trash2,
@@ -214,16 +213,15 @@ export default function PipelineKanbanView() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-screen">
           <div className="text-lg">Loading pipeline...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="h-screen flex flex-col">
         {/* Header */}
         <div className="bg-white border-b px-6 py-4">
@@ -458,6 +456,5 @@ export default function PipelineKanbanView() {
           </div>
         </div>
       )}
-    </CRMLayout>
   );
 }

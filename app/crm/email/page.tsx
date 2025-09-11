@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Mail, Send, Inbox, Archive, Trash2, Star, Reply, 
   ReplyAll, Forward, Paperclip, Clock, Check, CheckCheck,
@@ -457,16 +456,15 @@ Best regards,
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-screen">
           <div className="text-lg">Loading emails...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="h-screen flex">
         {/* Sidebar */}
         <div className="w-64 bg-white border-r flex flex-col">
@@ -968,6 +966,5 @@ Best regards,
           )}
         </div>
       </div>
-    </CRMLayout>
   );
 }

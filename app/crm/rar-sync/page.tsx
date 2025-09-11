@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { Play, Settings, Clock, CheckCircle, AlertCircle, Database, Zap } from 'lucide-react';
 
 interface SyncStatus {
@@ -82,7 +81,6 @@ export default function RARSyncPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center mb-2">
@@ -273,6 +271,5 @@ export default function RARSyncPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }

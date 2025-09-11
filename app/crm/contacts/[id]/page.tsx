@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import ContactTicketsCard from '@/components/crm/ContactTicketsCard';
 import TicketsTab from '@/components/crm/TicketsTab';
 import TimelineEvents from '@/components/crm/TimelineEvents';
@@ -89,26 +88,25 @@ export default function ContactDetailPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading contact...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   if (!contact) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg text-red-600">Contact not found</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow mb-6">
@@ -432,6 +430,5 @@ export default function ContactDetailPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }

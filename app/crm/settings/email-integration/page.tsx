@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Mail, Plus, Check, X, AlertCircle, Settings, 
   RefreshCw, Trash2, Power, Clock, Send, Calendar,
@@ -215,7 +214,6 @@ export default function EmailIntegrationPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Notification */}
         {notification && (
@@ -616,6 +614,5 @@ export default function EmailIntegrationPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Plus, Search, Filter, Mail, Phone, MessageSquare, 
   Video, FileText, Send, Clock, CheckCircle2, 
@@ -297,16 +296,15 @@ export default function CommunicationsPage() {
 
   if (loading) {
     return (
-      <CRMLayout>
+      
         <div className="flex items-center justify-center h-64">
           <div className="text-lg">Loading communications...</div>
         </div>
-      </CRMLayout>
+      
     );
   }
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -1165,6 +1163,5 @@ export default function CommunicationsPage() {
           </div>
         </div>
       )}
-    </CRMLayout>
   );
 }

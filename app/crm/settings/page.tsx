@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Settings, Target, Users, Building2, Bell, Shield, 
   Database, Globe, Mail, Calendar, ChevronRight, Workflow, Star
@@ -167,7 +166,6 @@ export default function CRMSettingsPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6">
         {/* Header */}
         <div className="mb-8">
@@ -272,6 +270,5 @@ export default function CRMSettingsPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }

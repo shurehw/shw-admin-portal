@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { Search, MapPin, Filter, Loader2, CheckCircle, AlertCircle, Globe, X, Building, Star, DollarSign, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
@@ -333,7 +332,6 @@ export default function DiscoverLeadsPage() {
   ];
 
   return (
-    <CRMLayout>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Link href="/crm/leads" className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-block">
@@ -953,6 +951,5 @@ export default function DiscoverLeadsPage() {
           </div>
         )}
       </div>
-    </CRMLayout>
   );
 }

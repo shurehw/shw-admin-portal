@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import CRMLayout from '@/components/CRMLayout';
 import { 
   Building, Mail, Phone, MessageSquare, Save, ArrowLeft,
   Clock, Bell, Calendar, Settings
@@ -92,7 +91,6 @@ export default function TouchpointSettingsPage() {
   };
 
   return (
-    <CRMLayout>
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -285,6 +283,5 @@ export default function TouchpointSettingsPage() {
           </div>
         </div>
       </div>
-    </CRMLayout>
   );
 }
