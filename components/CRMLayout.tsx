@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   Users, Building2, Target, Home,
   Handshake, Settings, Activity, CheckSquare,
-  Clock, MessageSquare, Zap,
+  MessageSquare, Zap,
   TrendingUp, Star, ChevronLeft, Menu, X
 } from 'lucide-react';
 
@@ -29,7 +29,6 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
     { name: 'Automations', href: '/crm/automations', icon: Zap },
-    { name: 'Timeline', href: '/crm/timeline', icon: Clock },
     { name: 'Reports', href: '/crm/reports', icon: TrendingUp },
     { name: 'Settings', href: '/crm/settings', icon: Settings },
   ];
