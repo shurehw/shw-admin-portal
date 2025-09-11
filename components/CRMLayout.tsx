@@ -3,11 +3,12 @@
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Users, Building2, Target, Home,
-  Handshake, Settings, Activity, CheckSquare,
-  MessageSquare, Zap,
-  TrendingUp, Star, ChevronLeft, Menu, X
+  Handshake, Settings, Activity,
+  MessageSquare, TrendingUp, 
+  ChevronLeft, Menu, X, Plus
 } from 'lucide-react';
 
 interface CRMLayoutProps {
@@ -17,25 +18,35 @@ interface CRMLayoutProps {
 export default function CRMLayout({ children }: CRMLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { user } = useAuth();
+
+  // Check if user can see Smart Leads (admin or sales_manager only)
+  const canSeeSmartLeads = user?.role === 'admin' || user?.role === 'sales_manager';
 
   const navigation = [
-    { name: 'My Day', href: '/crm', icon: Home },
-    { name: 'Smart Leads', href: '/crm/leads', icon: Target },
-    { name: 'Customer Rankings', href: '/crm/customer-rankings', icon: Star },
+    { name: 'Dashboard', href: '/crm', icon: Home },
+    ...(canSeeSmartLeads ? [
+      { name: 'Smart Leads', href: '/crm/leads', icon: Target }
+    ] : []),
     { name: 'Contacts', href: '/crm/contacts', icon: Users },
     { name: 'Companies', href: '/crm/companies', icon: Building2 },
     { name: 'Deals', href: '/crm/deals', icon: Handshake },
     { name: 'Activities', href: '/crm/activities', icon: Activity },
-    { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
-    { name: 'Automations', href: '/crm/automations', icon: Zap },
     { name: 'Reports', href: '/crm/reports', icon: TrendingUp },
     { name: 'Settings', href: '/crm/settings', icon: Settings },
   ];
 
+  const quickActions = [
+    { label: 'New Contact', href: '/crm/contacts/new' },
+    { label: 'New Company', href: '/crm/companies/new' },
+    { label: 'New Deal', href: '/crm/deals/new' },
+    { label: 'Log Activity', href: '/crm/activities/new' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Bar with Back to Admin button */}
+      {/* Top Bar with Back to Admin button and Quick Actions */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40">
         <div className="flex items-center justify-between h-full px-4">
           <div className="flex items-center">
@@ -46,6 +57,20 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
               {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
             <h1 className="ml-4 text-xl font-semibold text-gray-900">CRM</h1>
+            
+            {/* Quick Actions */}
+            <div className="hidden md:flex items-center ml-8 space-x-2">
+              {quickActions.map((action) => (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {action.label}
+                </Link>
+              ))}
+            </div>
           </div>
           
           <Link
@@ -84,6 +109,23 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
             );
           })}
         </nav>
+
+        {/* Mobile Quick Actions */}
+        <div className="lg:hidden border-t border-gray-200 p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick Actions</p>
+          <div className="space-y-1">
+            {quickActions.map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {action.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </aside>
 
       {/* Main Content */}
