@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Settings, Target, Users, Building2, Bell, Shield, 
   Database, Globe, Mail, Calendar, ChevronRight, Workflow, Star
@@ -17,7 +18,11 @@ interface SettingCard {
 
 export default function CRMSettingsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('general');
+  
+  // Check if user has permission to see Customer Rankings
+  const canSeeCustomerRankings = user?.role === 'admin' || user?.role === 'sales_manager';
 
   const settingCategories = [
     { id: 'general', name: 'General', icon: Settings },
@@ -29,13 +34,13 @@ export default function CRMSettingsPage() {
 
   const settingCards: Record<string, SettingCard[]> = {
     general: [
-      {
+      ...(canSeeCustomerRankings ? [{
         title: 'Customer Rankings',
         description: 'Configure customer tiers and ranking criteria',
         icon: Star,
         href: '/crm/settings/customer-rankings',
         color: 'yellow'
-      },
+      }] : []),
       {
         title: 'Touchpoint Settings',
         description: 'Set up follow-up frequencies and reminder schedules',

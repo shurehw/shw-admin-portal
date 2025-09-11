@@ -22,7 +22,6 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'My Day', href: '/crm', icon: Home },
     { name: 'Smart Leads', href: '/crm/leads', icon: Target },
     { name: 'Customer Rankings', href: '/crm/customer-rankings', icon: Star },
-    { name: 'Pipeline', href: '/crm/pipeline', icon: Workflow },
     { name: 'Contacts', href: '/crm/contacts', icon: Users },
     { name: 'Companies', href: '/crm/companies', icon: Building2 },
     { name: 'Deals', href: '/crm/deals', icon: Handshake },
@@ -30,11 +29,9 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
     { name: 'Email', href: '/crm/email', icon: Mail },
-    { name: 'Lists', href: '/crm/lists', icon: ListTodo },
     { name: 'Automations', href: '/crm/automations', icon: Zap },
     { name: 'Timeline', href: '/crm/timeline', icon: Clock },
     { name: 'Reports', href: '/crm/reports', icon: TrendingUp },
-    { name: 'RAR Sync', href: '/crm/rar-sync', icon: RefreshCw },
     { name: 'Settings', href: '/crm/settings', icon: Settings },
   ];
 
