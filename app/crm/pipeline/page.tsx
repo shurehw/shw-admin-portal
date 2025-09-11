@@ -222,6 +222,7 @@ export default function PipelineKanbanView() {
   }
 
   return (
+    <>
       <div className="h-screen flex flex-col">
         {/* Header */}
         <div className="bg-white border-b px-6 py-4">
@@ -456,5 +457,6 @@ export default function PipelineKanbanView() {
           </div>
         </div>
       )}
+    </>
   );
 }

@@ -390,6 +390,7 @@ export default function ActivitiesPage() {
   }
 
   return (
+    <>
       <div className="p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -1082,5 +1083,6 @@ export default function ActivitiesPage() {
           </div>
         </div>
       )}
+    </>
   );
 }
