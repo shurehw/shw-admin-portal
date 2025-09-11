@@ -6,6 +6,7 @@ import {
   Filter, Search, MoreHorizontal, Edit, Trash2, Play, Pause
 } from 'lucide-react';
 import Link from 'next/link';
+import CRMLayout from '@/components/CRMLayout';
 
 interface Task {
   id: string;
@@ -248,7 +249,8 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="p-6">
+    <CRMLayout>
+      <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
@@ -504,5 +506,6 @@ export default function TasksPage() {
         </div>
       </div>
     </div>
+    </CRMLayout>
   );
 }
