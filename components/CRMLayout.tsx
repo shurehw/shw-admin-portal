@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   Users, Building2, Target, Home,
   Handshake, Settings, Activity,
-  MessageSquare, TrendingUp, 
+  MessageSquare, TrendingUp, Package,
   ChevronLeft, Menu, X, Plus
 } from 'lucide-react';
 
@@ -30,6 +30,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     ] : []),
     { name: 'Contacts', href: '/crm/contacts', icon: Users },
     { name: 'Companies', href: '/crm/companies', icon: Building2 },
+    { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Deals', href: '/crm/deals', icon: Handshake },
     { name: 'Activities', href: '/crm/activities', icon: Activity },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
