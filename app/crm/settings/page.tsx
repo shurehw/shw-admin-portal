@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import CRMLayout from '@/components/CRMLayout';
 import { 
   Settings, Target, Users, Building2, Bell, Shield, 
-  Database, Globe, Mail, Calendar, ChevronRight, Workflow
+  Database, Globe, Mail, Calendar, ChevronRight, Workflow, Star
 } from 'lucide-react';
 
 interface SettingCard {
@@ -31,10 +31,24 @@ export default function CRMSettingsPage() {
   const settingCards: Record<string, SettingCard[]> = {
     general: [
       {
-        title: 'Email & Calendar Integration',
-        description: 'Connect Gmail to sync emails, calendar events, and track communications',
+        title: 'Customer Rankings',
+        description: 'Configure customer tiers and ranking criteria',
+        icon: Star,
+        href: '/crm/settings/customer-rankings',
+        color: 'yellow'
+      },
+      {
+        title: 'Touchpoint Settings',
+        description: 'Set up follow-up frequencies and reminder schedules',
+        icon: Calendar,
+        href: '/crm/settings/touchpoints',
+        color: 'indigo'
+      },
+      {
+        title: 'Email Channels',
+        description: 'Connect Gmail accounts to sync emails and track communications',
         icon: Mail,
-        href: '/crm/settings/email-integration',
+        href: '/crm/settings/email-channels',
         color: 'red'
       },
       {

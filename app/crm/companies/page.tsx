@@ -10,7 +10,7 @@ import {
   Star, StarOff, MoreVertical, Tag, Users, DollarSign,
   X, Globe, TrendingUp, Building, Briefcase, Clock,
   Activity, FileText, Package, UserCheck, ChevronRight,
-  Key, Shield, Send, Loader2
+  Key, Shield, Send, Loader2, Bell
 } from 'lucide-react';
 
 interface Company {
@@ -37,6 +37,9 @@ interface Company {
   contactCount?: number;
   dealCount?: number;
   totalValue?: number;
+  ranking?: number; // 1-5 star rating
+  lastFollowUp?: Date;
+  nextFollowUp?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -56,6 +59,7 @@ export default function CompaniesPage() {
   const [filterRevenueMax, setFilterRevenueMax] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterRanking, setFilterRanking] = useState('');
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
@@ -175,7 +179,10 @@ export default function CompaniesPage() {
       tags: ['hospitality', 'hotels', 'key-client'],
       contactCount: 15,
       dealCount: 8,
-      totalValue: 2500000
+      totalValue: 2500000,
+      ranking: 5,
+      lastFollowUp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      nextFollowUp: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     },
     {
       id: '2',
@@ -191,7 +198,10 @@ export default function CompaniesPage() {
       tags: ['hospitality', 'hotels'],
       contactCount: 12,
       dealCount: 5,
-      totalValue: 1800000
+      totalValue: 1800000,
+      ranking: 5,
+      lastFollowUp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      nextFollowUp: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000)
     },
     {
       id: '3',
@@ -206,7 +216,10 @@ export default function CompaniesPage() {
       tags: ['restaurants', 'local'],
       contactCount: 5,
       dealCount: 3,
-      totalValue: 125000
+      totalValue: 125000,
+      ranking: 3,
+      lastFollowUp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      nextFollowUp: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
     },
     {
       id: '4',
@@ -221,7 +234,10 @@ export default function CompaniesPage() {
       tags: ['hospitality', 'boutique'],
       contactCount: 3,
       dealCount: 1,
-      totalValue: 50000
+      totalValue: 50000,
+      ranking: 4,
+      lastFollowUp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      nextFollowUp: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
     }
   ];
 
@@ -352,6 +368,7 @@ export default function CompaniesPage() {
     const matchesStatus = !filterStatus || company.status === filterStatus;
     const matchesSize = !filterSize || company.size === filterSize;
     const matchesSource = !filterSource || company.source === filterSource;
+    const matchesRanking = !filterRanking || (company.ranking && company.ranking === parseInt(filterRanking));
     
     // Revenue filtering
     const revenue = company.revenue || 0;
@@ -365,7 +382,7 @@ export default function CompaniesPage() {
     
     return matchesSearch && matchesIndustry && matchesStatus && matchesSize && 
            matchesSource && matchesRevenueMin && matchesRevenueMax && 
-           matchesDateFrom && matchesDateTo;
+           matchesDateFrom && matchesDateTo && matchesRanking;
   });
 
   // Clear specific filter
@@ -375,6 +392,7 @@ export default function CompaniesPage() {
       case 'status': setFilterStatus(''); break;
       case 'size': setFilterSize(''); break;
       case 'source': setFilterSource(''); break;
+      case 'ranking': setFilterRanking(''); break;
       case 'revenue': 
         setFilterRevenueMin('');
         setFilterRevenueMax('');
@@ -388,6 +406,7 @@ export default function CompaniesPage() {
         setFilterStatus('');
         setFilterSize('');
         setFilterSource('');
+        setFilterRanking('');
         setFilterRevenueMin('');
         setFilterRevenueMax('');
         setFilterDateFrom('');
@@ -399,7 +418,7 @@ export default function CompaniesPage() {
 
   // Check if any filters are active
   const hasActiveFilters = filterIndustry || filterStatus || filterSize || filterSource || 
-                          filterRevenueMin || filterRevenueMax || filterDateFrom || filterDateTo;
+                          filterRevenueMin || filterRevenueMax || filterDateFrom || filterDateTo || filterRanking;
 
   // Handle bulk actions
   const handleBulkDelete = () => {
@@ -586,6 +605,20 @@ export default function CompaniesPage() {
                 <option value="Social Media">Social Media</option>
               </select>
               
+              {/* Ranking Filter */}
+              <select
+                value={filterRanking}
+                onChange={(e) => setFilterRanking(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="">All Rankings</option>
+                <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                <option value="3">⭐⭐⭐ 3 Stars</option>
+                <option value="2">⭐⭐ 2 Stars</option>
+                <option value="1">⭐ 1 Star</option>
+              </select>
+              
               {/* Revenue Range */}
               <div className="flex gap-2">
                 <input
@@ -658,6 +691,15 @@ export default function CompaniesPage() {
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
                   {filterSource}
                   <button onClick={() => clearFilter('source')} className="hover:text-orange-900">
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+              {filterRanking && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
+                  <Star size={12} />
+                  {filterRanking} Star{filterRanking !== '1' ? 's' : ''}
+                  <button onClick={() => clearFilter('ranking')} className="hover:text-yellow-900">
                     <X size={12} />
                   </button>
                 </span>
@@ -854,9 +896,10 @@ export default function CompaniesPage() {
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ranking</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Industry</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Info</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Revenue</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -900,6 +943,27 @@ export default function CompaniesPage() {
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1">
+                      {company.ranking ? (
+                        <>
+                          {[...Array(company.ranking)].map((_, i) => (
+                            <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                          ))}
+                          {[...Array(5 - company.ranking)].map((_, i) => (
+                            <Star key={i + company.ranking} className="h-4 w-4 text-gray-300" />
+                          ))}
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not ranked</span>
+                      )}
+                    </div>
+                    {company.nextFollowUp && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Next: {new Date(company.nextFollowUp).toLocaleDateString()}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm">{company.industry}</td>
                   <td className="px-6 py-4">
@@ -985,9 +1049,21 @@ export default function CompaniesPage() {
                         <Building2 className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          {selectedCompany.name}
-                        </h2>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl font-semibold text-gray-900">
+                            {selectedCompany.name}
+                          </h2>
+                          {selectedCompany.ranking && (
+                            <div className="flex items-center">
+                              {[...Array(selectedCompany.ranking)].map((_, i) => (
+                                <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                              ))}
+                              {[...Array(5 - selectedCompany.ranking)].map((_, i) => (
+                                <Star key={i + selectedCompany.ranking} className="h-4 w-4 text-gray-300" />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500">{selectedCompany.industry}</p>
                       </div>
                     </div>
@@ -1069,10 +1145,44 @@ export default function CompaniesPage() {
                       <h3 className="text-lg font-medium text-gray-900 mb-4">Business Metrics</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
+                          <p className="text-sm text-gray-500">Customer Ranking</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {selectedCompany.ranking ? (
+                              <>
+                                <div className="flex">
+                                  {[...Array(selectedCompany.ranking)].map((_, i) => (
+                                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                                  ))}
+                                  {[...Array(5 - selectedCompany.ranking)].map((_, i) => (
+                                    <Star key={i + selectedCompany.ranking} className="h-5 w-5 text-gray-300" />
+                                  ))}
+                                </div>
+                                <span className="text-sm font-medium">({selectedCompany.ranking}/5)</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-400">Not ranked</span>
+                            )}
+                          </div>
+                        </div>
+                        <div>
                           <p className="text-sm text-gray-500">Status</p>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedCompany.status)}`}>
                             {selectedCompany.status}
                           </span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Last Follow-up</p>
+                          <p className="font-medium flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-gray-400" />
+                            {selectedCompany.lastFollowUp ? new Date(selectedCompany.lastFollowUp).toLocaleDateString() : 'Never'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Next Follow-up</p>
+                          <p className="font-medium flex items-center gap-2">
+                            <Bell className="h-4 w-4 text-gray-400" />
+                            {selectedCompany.nextFollowUp ? new Date(selectedCompany.nextFollowUp).toLocaleDateString() : 'Not scheduled'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Annual Revenue</p>
@@ -1084,13 +1194,6 @@ export default function CompaniesPage() {
                         <div>
                           <p className="text-sm text-gray-500">Source</p>
                           <p className="font-medium">{selectedCompany.source || '-'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Created Date</p>
-                          <p className="font-medium flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {selectedCompany.createdAt ? new Date(selectedCompany.createdAt).toLocaleDateString() : '-'}
-                          </p>
                         </div>
                       </div>
                     </div>

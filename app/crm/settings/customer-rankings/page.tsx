@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import CRMLayout from '@/components/CRMLayout';
 import { 
-  Star, Users, Calendar, Mail, Phone, MessageSquare, 
-  Building, TrendingUp, DollarSign, Clock, Bell,
-  Settings, Save, Plus, Trash2, Edit2, Check, X
+  Star, Save, Plus, Trash2, Edit2, X, 
+  Building, Mail, Phone, MessageSquare, Settings
 } from 'lucide-react';
 
 interface CustomerRank {
@@ -21,22 +20,16 @@ interface CustomerRank {
   description: string;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  company: string;
-  rankId: string;
-  lastVisit?: string;
-  lastEmail?: string;
-  lastPhone?: string;
-  totalOrders: number;
-  totalRevenue: number;
-  assignedTo: string;
+interface TouchpointSettings {
+  type: 'visit' | 'email' | 'phone' | 'message';
+  enabled: boolean;
+  defaultFrequencyDays: number;
+  reminderDaysBefore: number;
+  escalateAfterDays: number;
 }
 
-
-export default function CustomerRankingsPage() {
-  const [activeTab, setActiveTab] = useState<'rankings' | 'customers'>('rankings');
+export default function CustomerRankingSettings() {
+  const [activeTab, setActiveTab] = useState<'rankings' | 'touchpoints'>('rankings');
   const [ranks, setRanks] = useState<CustomerRank[]>([
     {
       id: '5',
@@ -100,184 +93,50 @@ export default function CustomerRankingsPage() {
     }
   ]);
 
-  const [customers, setCustomers] = useState<Customer[]>([
+  const [touchpointSettings, setTouchpointSettings] = useState<TouchpointSettings[]>([
     {
-      id: '1',
-      name: 'John Doe',
-      company: 'ABC Hotel Group',
-      rankId: '5',
-      lastVisit: '2024-01-15',
-      lastEmail: '2024-02-01',
-      lastPhone: '2024-01-28',
-      totalOrders: 24,
-      totalRevenue: 125000,
-      assignedTo: 'Sarah Smith'
+      type: 'visit',
+      enabled: true,
+      defaultFrequencyDays: 30,
+      reminderDaysBefore: 7,
+      escalateAfterDays: 14
     },
     {
-      id: '2',
-      name: 'Jane Smith',
-      company: 'XYZ Resorts',
-      rankId: '4',
-      lastVisit: '2024-01-20',
-      lastEmail: '2024-02-05',
-      lastPhone: '2024-02-01',
-      totalOrders: 15,
-      totalRevenue: 75000,
-      assignedTo: 'Mike Johnson'
+      type: 'email',
+      enabled: true,
+      defaultFrequencyDays: 14,
+      reminderDaysBefore: 3,
+      escalateAfterDays: 7
     },
     {
-      id: '3',
-      name: 'Bob Wilson',
-      company: 'City Center Hotels',
-      rankId: '3',
-      lastVisit: '2024-01-25',
-      lastEmail: '2024-02-03',
-      lastPhone: '2024-01-30',
-      totalOrders: 10,
-      totalRevenue: 35000,
-      assignedTo: 'Sarah Smith'
+      type: 'phone',
+      enabled: true,
+      defaultFrequencyDays: 21,
+      reminderDaysBefore: 5,
+      escalateAfterDays: 10
     },
     {
-      id: '4',
-      name: 'Alice Brown',
-      company: 'Boutique Stays',
-      rankId: '2',
-      lastVisit: '2024-01-10',
-      lastEmail: '2024-01-20',
-      lastPhone: '2024-01-15',
-      totalOrders: 5,
-      totalRevenue: 12000,
-      assignedTo: 'Mike Johnson'
+      type: 'message',
+      enabled: false,
+      defaultFrequencyDays: 7,
+      reminderDaysBefore: 2,
+      escalateAfterDays: 5
     }
   ]);
 
-
-  const [editingRank, setEditingRank] = useState<string | null>(null);
-  const [newRank, setNewRank] = useState<Partial<CustomerRank>>({});
   const [showAddRankModal, setShowAddRankModal] = useState(false);
   const [editRankData, setEditRankData] = useState<CustomerRank | null>(null);
-
-  const getOverdueCustomers = () => {
-    const now = new Date();
-    return customers.filter(customer => {
-      const rank = ranks.find(r => r.id === customer.rankId);
-      if (!rank) return false;
-
-      if (customer.lastVisit) {
-        const lastVisitDate = new Date(customer.lastVisit);
-        const daysSinceVisit = Math.floor((now.getTime() - lastVisitDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceVisit > rank.visitFrequencyDays) return true;
-      }
-
-      if (customer.lastEmail) {
-        const lastEmailDate = new Date(customer.lastEmail);
-        const daysSinceEmail = Math.floor((now.getTime() - lastEmailDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceEmail > rank.emailFrequencyDays) return true;
-      }
-
-      return false;
-    });
-  };
-
-  const getUpcomingReminders = () => {
-    const now = new Date();
-    const reminders: any[] = [];
-
-    customers.forEach(customer => {
-      const rank = ranks.find(r => r.id === customer.rankId);
-      if (!rank) return;
-
-      // Check visit reminders
-      if (customer.lastVisit) {
-        const lastVisitDate = new Date(customer.lastVisit);
-        const nextVisitDate = new Date(lastVisitDate.getTime() + rank.visitFrequencyDays * 24 * 60 * 60 * 1000);
-        const reminderDate = new Date(nextVisitDate.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days before
-        
-        if (reminderDate <= now && nextVisitDate > now) {
-          reminders.push({
-            customer,
-            type: 'visit',
-            dueDate: nextVisitDate,
-            daysUntilDue: Math.ceil((nextVisitDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-          });
-        }
-      }
-
-      // Check email reminders
-      if (customer.lastEmail) {
-        const lastEmailDate = new Date(customer.lastEmail);
-        const nextEmailDate = new Date(lastEmailDate.getTime() + rank.emailFrequencyDays * 24 * 60 * 60 * 1000);
-        const reminderDate = new Date(nextEmailDate.getTime() - 3 * 24 * 60 * 60 * 1000); // 3 days before
-        
-        if (reminderDate <= now && nextEmailDate > now) {
-          reminders.push({
-            customer,
-            type: 'email',
-            dueDate: nextEmailDate,
-            daysUntilDue: Math.ceil((nextEmailDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-          });
-        }
-      }
-    });
-
-    return reminders.sort((a, b) => a.daysUntilDue - b.daysUntilDue);
-  };
 
   return (
     <CRMLayout>
       <div className="p-6">
-        {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Customer Rankings & Follow-up</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Customer Ranking Settings</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage customer tiers and automated follow-up reminders
+            Configure customer tiers and follow-up schedules
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Customers</p>
-                <p className="text-2xl font-semibold">{customers.length}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Overdue Follow-ups</p>
-                <p className="text-2xl font-semibold text-red-600">{getOverdueCustomers().length}</p>
-              </div>
-              <Bell className="h-8 w-8 text-red-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">This Week</p>
-                <p className="text-2xl font-semibold text-yellow-600">{getUpcomingReminders().filter(r => r.daysUntilDue <= 7).length}</p>
-              </div>
-              <Calendar className="h-8 w-8 text-yellow-500" />
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Ranking Tiers</p>
-                <p className="text-2xl font-semibold">{ranks.length}</p>
-              </div>
-              <Star className="h-8 w-8 text-purple-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px">
@@ -290,18 +149,18 @@ export default function CustomerRankingsPage() {
                 }`}
               >
                 <Star className="h-4 w-4 inline mr-2" />
-                Customer Rankings
+                Ranking Tiers
               </button>
               <button
-                onClick={() => setActiveTab('customers')}
+                onClick={() => setActiveTab('touchpoints')}
                 className={`px-6 py-3 text-sm font-medium ${
-                  activeTab === 'customers'
+                  activeTab === 'touchpoints'
                     ? 'border-b-2 border-blue-500 text-blue-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                <Users className="h-4 w-4 inline mr-2" />
-                Customer List
+                <Settings className="h-4 w-4 inline mr-2" />
+                Touchpoint Settings
               </button>
             </nav>
           </div>
@@ -408,150 +267,106 @@ export default function CustomerRankingsPage() {
               </div>
             )}
 
-            {/* Customers Tab */}
-            {activeTab === 'customers' && (
+            {/* Touchpoints Tab */}
+            {activeTab === 'touchpoints' && (
               <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-medium">Customer Follow-up Status</h2>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Export Reminders
-                  </button>
-                </div>
-
-                {/* Upcoming Reminders */}
-                <div className="mb-6">
-                  <h3 className="font-medium text-gray-900 mb-3">Upcoming Reminders</h3>
-                  <div className="space-y-2">
-                    {getUpcomingReminders().slice(0, 5).map((reminder, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h2 className="text-lg font-medium mb-4">Touchpoint Configuration</h2>
+                
+                <div className="space-y-4">
+                  {touchpointSettings.map((setting) => (
+                    <div key={setting.type} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          {reminder.type === 'visit' && <Building className="h-5 w-5 text-yellow-600" />}
-                          {reminder.type === 'email' && <Mail className="h-5 w-5 text-yellow-600" />}
-                          {reminder.type === 'phone' && <Phone className="h-5 w-5 text-yellow-600" />}
+                          {setting.type === 'visit' && <Building className="h-5 w-5 text-gray-600" />}
+                          {setting.type === 'email' && <Mail className="h-5 w-5 text-gray-600" />}
+                          {setting.type === 'phone' && <Phone className="h-5 w-5 text-gray-600" />}
+                          {setting.type === 'message' && <MessageSquare className="h-5 w-5 text-gray-600" />}
+                          
+                          <h3 className="font-medium text-gray-900 capitalize">{setting.type} Reminders</h3>
+                        </div>
+                        
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={setting.enabled}
+                            onChange={(e) => {
+                              const updated = [...touchpointSettings];
+                              const idx = updated.findIndex(s => s.type === setting.type);
+                              updated[idx].enabled = e.target.checked;
+                              setTouchpointSettings(updated);
+                            }}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                      
+                      {setting.enabled && (
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Default Frequency (days)
+                            </label>
+                            <input
+                              type="number"
+                              value={setting.defaultFrequencyDays}
+                              onChange={(e) => {
+                                const updated = [...touchpointSettings];
+                                const idx = updated.findIndex(s => s.type === setting.type);
+                                updated[idx].defaultFrequencyDays = parseInt(e.target.value);
+                                setTouchpointSettings(updated);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
                           
                           <div>
-                            <p className="font-medium text-gray-900">
-                              {reminder.customer.name} - {reminder.customer.company}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {reminder.type === 'visit' && 'Schedule visit'}
-                              {reminder.type === 'email' && 'Send follow-up email'}
-                              {reminder.type === 'phone' && 'Make follow-up call'}
-                              {' - Due in '}{reminder.daysUntilDue} days
-                            </p>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Remind Before (days)
+                            </label>
+                            <input
+                              type="number"
+                              value={setting.reminderDaysBefore}
+                              onChange={(e) => {
+                                const updated = [...touchpointSettings];
+                                const idx = updated.findIndex(s => s.type === setting.type);
+                                updated[idx].reminderDaysBefore = parseInt(e.target.value);
+                                setTouchpointSettings(updated);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Escalate After (days)
+                            </label>
+                            <input
+                              type="number"
+                              value={setting.escalateAfterDays}
+                              onChange={(e) => {
+                                const updated = [...touchpointSettings];
+                                const idx = updated.findIndex(s => s.type === setting.type);
+                                updated[idx].escalateAfterDays = parseInt(e.target.value);
+                                setTouchpointSettings(updated);
+                              }}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                            />
                           </div>
                         </div>
-                        
-                        <div className="flex gap-2">
-                          <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-                            Mark Done
-                          </button>
-                          <button className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
-                            Snooze
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-
-                {/* Customer Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Visit</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Phone</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned To</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {customers.map((customer) => {
-                        const rank = ranks.find(r => r.id === customer.rankId);
-                        const now = new Date();
-                        
-                        const daysSinceVisit = customer.lastVisit 
-                          ? Math.floor((now.getTime() - new Date(customer.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
-                          : null;
-                        
-                        const daysSinceEmail = customer.lastEmail
-                          ? Math.floor((now.getTime() - new Date(customer.lastEmail).getTime()) / (1000 * 60 * 60 * 24))
-                          : null;
-                        
-                        const daysSincePhone = customer.lastPhone
-                          ? Math.floor((now.getTime() - new Date(customer.lastPhone).getTime()) / (1000 * 60 * 60 * 24))
-                          : null;
-
-                        return (
-                          <tr key={customer.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <p className="font-medium text-gray-900">{customer.name}</p>
-                                <p className="text-sm text-gray-500">{customer.company}</p>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {rank && (
-                                <div className="flex items-center gap-0.5">
-                                  {[...Array(parseInt(rank.id))].map((_, i) => (
-                                    <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                                  ))}
-                                  {[...Array(5 - parseInt(rank.id))].map((_, i) => (
-                                    <Star key={i + parseInt(rank.id)} className="h-4 w-4 text-gray-300" />
-                                  ))}
-                                </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                <p className={daysSinceVisit && rank && daysSinceVisit > rank.visitFrequencyDays ? 'text-red-600 font-medium' : 'text-gray-900'}>
-                                  {daysSinceVisit !== null ? `${daysSinceVisit} days ago` : 'Never'}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                <p className={daysSinceEmail && rank && daysSinceEmail > rank.emailFrequencyDays ? 'text-red-600 font-medium' : 'text-gray-900'}>
-                                  {daysSinceEmail !== null ? `${daysSinceEmail} days ago` : 'Never'}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                <p className={daysSincePhone && rank && daysSincePhone > rank.phoneFrequencyDays ? 'text-red-600 font-medium' : 'text-gray-900'}>
-                                  {daysSincePhone !== null ? `${daysSincePhone} days ago` : 'Never'}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {customer.assignedTo}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex gap-2">
-                                <button className="text-blue-600 hover:text-blue-800">
-                                  <Calendar className="h-4 w-4" />
-                                </button>
-                                <button className="text-green-600 hover:text-green-800">
-                                  <Mail className="h-4 w-4" />
-                                </button>
-                                <button className="text-purple-600 hover:text-purple-800">
-                                  <Phone className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                
+                <div className="mt-6 flex justify-end">
+                  <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Save Settings
+                  </button>
                 </div>
               </div>
             )}
-
           </div>
         </div>
 
