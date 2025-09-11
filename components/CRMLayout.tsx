@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Users, Building2, Target, Home,
-  Handshake, Settings, Activity, Mail, CheckSquare,
-  Workflow, Clock, MessageSquare, ListTodo, Zap,
-  TrendingUp, RefreshCw, Star, ChevronLeft, Menu, X
+  Handshake, Settings, Activity, CheckSquare,
+  Clock, MessageSquare, Zap,
+  TrendingUp, Star, ChevronLeft, Menu, X
 } from 'lucide-react';
 
 interface CRMLayoutProps {
@@ -28,7 +28,6 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'Activities', href: '/crm/activities', icon: Activity },
     { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
-    { name: 'Email', href: '/crm/email', icon: Mail },
     { name: 'Automations', href: '/crm/automations', icon: Zap },
     { name: 'Timeline', href: '/crm/timeline', icon: Clock },
     { name: 'Reports', href: '/crm/reports', icon: TrendingUp },
