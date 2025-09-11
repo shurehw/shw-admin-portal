@@ -4,7 +4,7 @@ import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AdminLayout from './AdminLayout';
-import { useAuth } from '@/contexts/AuthContext';
+// import { useAuth } from '@/contexts/AuthContext'; // Temporarily disabled for debugging
 import { 
   Users, Building2, BarChart3, Target, Search,
   Plus, TrendingUp, Database, RefreshCw, Command, Home,
@@ -20,7 +20,8 @@ interface CRMLayoutProps {
 export default function CRMLayout({ children }: CRMLayoutProps) {
   const pathname = usePathname();
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
-  const { hasCapability } = useAuth();
+  // Temporarily disabled auth to debug navigation issue
+  // const { hasCapability } = useAuth();
 
   // Temporarily show all navigation items to debug the issue
   const navigation = [
