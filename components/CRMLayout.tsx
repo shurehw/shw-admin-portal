@@ -22,35 +22,36 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
   const { hasCapability } = useAuth();
 
+  // Temporarily show all navigation items to debug the issue
   const navigation = [
-    { name: 'My Day', href: '/crm', icon: Home, capability: null },
-    { name: 'Smart Leads', href: '/crm/leads', icon: Target, capability: null },
-    { name: 'Pipeline', href: '/crm/pipeline', icon: Workflow, capability: 'deals:read' },
-    { name: 'Contacts', href: '/crm/contacts', icon: Users, capability: 'contacts:read' },
-    { name: 'Companies', href: '/crm/companies', icon: Building2, capability: 'companies:read' },
-    { name: 'Deals', href: '/crm/deals', icon: Handshake, capability: 'deals:read' },
-    { name: 'Customer Rankings', href: '/crm/customer-rankings', icon: Star, capability: null },
-    { name: 'Activities', href: '/crm/activities', icon: Activity, capability: 'contacts:read' },
-    { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare, capability: 'contacts:read' },
-    { name: 'Communications', href: '/crm/communications', icon: MessageSquare, capability: 'contacts:read' },
-    { name: 'Email', href: '/crm/email', icon: Mail, capability: 'contacts:read' },
-    { name: 'Lists', href: '/crm/lists', icon: ListTodo, capability: 'contacts:read' },
-    { name: 'Automations', href: '/crm/automations', icon: Zap, capability: 'admin:read' },
-    { name: 'Timeline', href: '/crm/timeline', icon: Clock, capability: 'contacts:read' },
-    { name: 'Reports', href: '/crm/reports', icon: TrendingUp, capability: 'analytics:read' },
-    { name: 'RAR Sync', href: '/crm/rar-sync', icon: RefreshCw, capability: 'admin:read' },
-    { name: 'Email Channels', href: '/crm/settings/email-channels', icon: Mail, capability: 'settings:write' },
-    { name: 'Settings', href: '/crm/settings', icon: Settings, capability: 'settings:write' },
-  ].filter(item => !item.capability || hasCapability(item.capability as any));
+    { name: 'My Day', href: '/crm', icon: Home },
+    { name: 'Smart Leads', href: '/crm/leads', icon: Target },
+    { name: 'Pipeline', href: '/crm/pipeline', icon: Workflow },
+    { name: 'Contacts', href: '/crm/contacts', icon: Users },
+    { name: 'Companies', href: '/crm/companies', icon: Building2 },
+    { name: 'Deals', href: '/crm/deals', icon: Handshake },
+    { name: 'Customer Rankings', href: '/crm/customer-rankings', icon: Star },
+    { name: 'Activities', href: '/crm/activities', icon: Activity },
+    { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare },
+    { name: 'Communications', href: '/crm/communications', icon: MessageSquare },
+    { name: 'Email', href: '/crm/email', icon: Mail },
+    { name: 'Lists', href: '/crm/lists', icon: ListTodo },
+    { name: 'Automations', href: '/crm/automations', icon: Zap },
+    { name: 'Timeline', href: '/crm/timeline', icon: Clock },
+    { name: 'Reports', href: '/crm/reports', icon: TrendingUp },
+    { name: 'RAR Sync', href: '/crm/rar-sync', icon: RefreshCw },
+    { name: 'Email Channels', href: '/crm/settings/email-channels', icon: Mail },
+    { name: 'Settings', href: '/crm/settings', icon: Settings },
+  ];
 
   const quickActions = [
-    { label: 'New Contact', icon: Users, href: '/crm/contacts/new', capability: 'contacts:write' },
-    { label: 'New Company', icon: Building2, href: '/crm/companies/new', capability: 'companies:write' },
-    { label: 'New Deal', icon: Handshake, href: '/crm/deals/new', capability: 'deals:write' },
-    { label: 'New Activity', icon: Activity, href: '/crm/activities/new', capability: 'contacts:write' },
-    { label: 'New Task', icon: CheckSquare, href: '/crm/tasks/new', capability: 'contacts:write' },
-    { label: 'New Quote', icon: FilePlus, href: '/quotes/new', capability: 'quotes:write' },
-  ].filter(action => hasCapability(action.capability as any));
+    { label: 'New Contact', icon: Users, href: '/crm/contacts/new' },
+    { label: 'New Company', icon: Building2, href: '/crm/companies/new' },
+    { label: 'New Deal', icon: Handshake, href: '/crm/deals/new' },
+    { label: 'New Activity', icon: Activity, href: '/crm/activities/new' },
+    { label: 'New Task', icon: CheckSquare, href: '/crm/tasks/new' },
+    { label: 'New Quote', icon: FilePlus, href: '/quotes/new' },
+  ];
 
   return (
     <AdminLayout>
