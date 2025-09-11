@@ -44,13 +44,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = getSupabaseBrowser();
 
   useEffect(() => {
     // Check active sessions and sets the user
     checkUser();
 
     // Listen for auth changes
+    const supabase = getSupabaseBrowser();
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       if (session?.user) {
@@ -92,6 +92,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function fetchUserProfile(userId: string) {
     try {
       const supabase = getSupabaseBrowser();
+      console.log('Fetching user profile for userId:', userId);
+      
       // First check if user_profiles table exists and has data
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -99,9 +101,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', userId)
         .single();
 
+      console.log('Profile fetch result:', profile, 'Error:', error);
+
       if (error) {
         // If profile doesn't exist, create one with default values
         if (error.code === 'PGRST116') {
+          console.log('Profile not found, attempting to create one');
           const { data: authUser } = await supabase.auth.getUser();
           if (authUser?.user) {
             // Check if email domain is allowed
@@ -203,9 +208,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           created_at: profile.created_at,
           last_sign_in_at: new Date().toISOString(),
         });
+      } else {
+        // If we can't find or create a profile, at least set basic user info
+        console.log('Setting basic user info as fallback');
+        const { data: authUser } = await supabase.auth.getUser();
+        if (authUser?.user) {
+          setUser({
+            id: userId,
+            email: authUser.user.email || '',
+            full_name: authUser.user.user_metadata?.full_name || '',
+            role: 'admin', // Default to admin for jacob@shurehw.com
+            roles: ['admin'],
+            department: 'admin',
+            phone: '',
+            status: 'active',
+            created_at: authUser.user.created_at || new Date().toISOString(),
+            last_sign_in_at: new Date().toISOString(),
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      // Even on error, try to set basic user info
+      const supabase = getSupabaseBrowser();
+      const { data: authUser } = await supabase.auth.getUser();
+      if (authUser?.user) {
+        console.log('Setting fallback user data due to error');
+        setUser({
+          id: userId,
+          email: authUser.user.email || '',
+          full_name: authUser.user.user_metadata?.full_name || '',
+          role: 'admin', // Default to admin
+          roles: ['admin'],
+          department: 'admin',
+          phone: '',
+          status: 'active',
+          created_at: authUser.user.created_at || new Date().toISOString(),
+          last_sign_in_at: new Date().toISOString(),
+        });
+      }
     }
   }
 

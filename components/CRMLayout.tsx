@@ -10,7 +10,7 @@ import {
   Plus, TrendingUp, Database, RefreshCw, Command, Home,
   Handshake, Settings, Activity, Mail, CheckSquare,
   Workflow, Clock, MessageSquare, ListTodo, Zap, ChevronDown,
-  FilePlus
+  FilePlus, Star
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 
@@ -31,6 +31,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'Contacts', href: '/crm/contacts', icon: Users, capability: 'contacts:read' },
     { name: 'Companies', href: '/crm/companies', icon: Building2, capability: 'companies:read' },
     { name: 'Deals', href: '/crm/deals', icon: Handshake, capability: 'deals:read' },
+    { name: 'Customer Rankings', href: '/crm/customer-rankings', icon: Star, capability: null },
     { name: 'Activities', href: '/crm/activities', icon: Activity, capability: 'contacts:read' },
     { name: 'Tasks', href: '/crm/tasks', icon: CheckSquare, capability: 'contacts:read' },
     { name: 'Communications', href: '/crm/communications', icon: MessageSquare, capability: 'contacts:read' },
@@ -40,6 +41,7 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
     { name: 'Timeline', href: '/crm/timeline', icon: Clock, capability: 'contacts:read' },
     { name: 'Reports', href: '/crm/reports', icon: TrendingUp, capability: 'analytics:read' },
     { name: 'RAR Sync', href: '/crm/rar-sync', icon: RefreshCw, capability: 'admin:read' },
+    { name: 'Email Channels', href: '/crm/settings/email-channels', icon: Mail, capability: 'settings:write' },
     { name: 'Settings', href: '/crm/settings', icon: Settings, capability: 'settings:write' },
   ].filter(item => !item.capability || hasCapability(item.capability as any));
 

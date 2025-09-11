@@ -47,14 +47,6 @@ export default function SettingsPage() {
     requireSpecialChars: true,
     requireNumbers: true,
     
-    // Email Settings
-    smtpHost: 'smtp.gmail.com',
-    smtpPort: '587',
-    smtpUsername: '',
-    smtpPassword: '',
-    emailFrom: 'noreply@shurehw.com',
-    emailFromName: 'SHW Admin',
-    
     // Payment Settings
     stripeEnabled: true,
     stripePublicKey: '',
@@ -74,7 +66,7 @@ export default function SettingsPage() {
     { id: 'general', title: 'General', description: 'Basic company information', icon: Settings },
     { id: 'notifications', title: 'Notifications', description: 'Email and alert preferences', icon: Bell },
     { id: 'security', title: 'Security', description: 'Authentication and password policies', icon: Shield },
-    { id: 'email', title: 'Email Configuration', description: 'SMTP and email settings', icon: Mail },
+    { id: 'email', title: 'Email Integration', description: 'OAuth-based email connections', icon: Mail },
     { id: 'payment', title: 'Payment Methods', description: 'Payment gateway configuration', icon: CreditCard },
     { id: 'inventory', title: 'Inventory', description: 'Stock and reorder settings', icon: Package }
   ];
@@ -476,78 +468,64 @@ export default function SettingsPage() {
               <div>
                 <h2 className="text-xl font-semibold mb-6">Email Configuration</h2>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SMTP Host
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.smtpHost}
-                        onChange={(e) => handleInputChange('smtpHost', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-blue-900 mb-2">OAuth-Based Email Integration</h3>
+                    <p className="text-sm text-blue-700 mb-4">
+                      We now use Google OAuth for secure email integration. No passwords are stored.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {/* Support Email Setup */}
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Support Email Setup</h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Connect Gmail accounts to receive and manage support tickets automatically
+                          </p>
+                        </div>
+                        <a
+                          href="/admin/settings/support-email"
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                        >
+                          Configure
+                        </a>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SMTP Port
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.smtpPort}
-                        onChange={(e) => handleInputChange('smtpPort', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SMTP Username
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.smtpUsername}
-                        onChange={(e) => handleInputChange('smtpUsername', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SMTP Password
-                      </label>
-                      <input
-                        type="password"
-                        value={settings.smtpPassword}
-                        onChange={(e) => handleInputChange('smtpPassword', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        From Email
-                      </label>
-                      <input
-                        type="email"
-                        value={settings.emailFrom}
-                        onChange={(e) => handleInputChange('emailFrom', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        From Name
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.emailFromName}
-                        onChange={(e) => handleInputChange('emailFromName', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+
+                    {/* Sales Team Email (CRM) */}
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Sales Team Email Channels</h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Sales team members should connect their Gmail accounts in the CRM
+                          </p>
+                        </div>
+                        <a
+                          href="/crm/settings/email-channels"
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                        >
+                          Go to CRM
+                        </a>
+                      </div>
                     </div>
                   </div>
-                  
-                  <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                    Test Email Configuration
-                  </button>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex">
+                      <Mail className="h-5 w-5 text-gray-600 mt-0.5 mr-3" />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-900">How it works</h4>
+                        <ul className="text-sm text-gray-600 mt-2 space-y-1 list-disc list-inside">
+                          <li>Support emails: Admin connects support@shurehw.com for ticket creation</li>
+                          <li>Sales emails: Each sales rep connects their own Gmail in CRM</li>
+                          <li>All connections use secure Google OAuth - no passwords stored</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

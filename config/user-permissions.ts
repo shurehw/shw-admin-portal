@@ -31,4 +31,4 @@ export const userPermissions: Record<string, string> = {
 export const defaultRole = 'viewer';
 
 // Allowed email domains
-export const allowedDomains = ['shurehw.com', 'shureprint.com'];
+export const allowedDomains = ['shurehw.com', 'shureprint.com', 'thebinyangroup.com'];

@@ -73,6 +73,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to resend invite' }, { status: 500 });
     }
 
+    // Skip email sending if no SMTP credentials configured
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.log('Email sending skipped - no SMTP credentials configured');
+      return NextResponse.json({ 
+        success: true,
+        message: `Invite marked as resent for ${invite.email} (email sending skipped)`,
+        emailSent: false
+      });
+    }
+
     // Send the invitation email
     const transporter = nodemailer.createTransporter({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',

@@ -59,11 +59,11 @@ export default function InviteUsersPage() {
     // Validate email domains
     const invalidEmails = validInvites.filter(inv => {
       const domain = inv.email.split('@')[1];
-      return !['shurehw.com', 'shureprint.com'].includes(domain);
+      return !['shurehw.com', 'shureprint.com', 'thebinyangroup.com'].includes(domain);
     });
 
     if (invalidEmails.length > 0) {
-      setMessage(`Invalid email domains. Only @shurehw.com and @shureprint.com are allowed.`);
+      setMessage(`Invalid email domains. Only @shurehw.com, @shureprint.com, and @thebinyangroup.com are allowed.`);
       return;
     }
 

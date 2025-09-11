@@ -8,7 +8,7 @@ import {
   Home, Building, FileText, Package, CreditCard, Users, 
   Settings, LogOut, Menu, X, Bell, Search, ChevronDown,
   BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy, DollarSign,
-  FilePlus, RefreshCw, Archive
+  FilePlus, RefreshCw, Archive, Mail
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     ];
     
     const adminOnlyNav = [
-      { name: 'Users', href: '/admin/users', icon: Users, roles: ['admin'] },
+      // Users moved to top navigation dropdown only
     ];
     
     const salesNav = [
@@ -179,13 +179,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           <Settings className="h-4 w-4 mr-2" />
                           Settings
                         </Link>
-                        <Link href="/admin/settings/email" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
-                          <Mail className="h-4 w-4 mr-2" />
-                          Email Configuration
-                        </Link>
                         <Link href="/admin/settings/roles" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
                           <Shield className="h-4 w-4 mr-2" />
                           Role Permissions
+                        </Link>
+                        <Link href="/admin/settings/ticket-routing" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Ticket Email Routing
+                        </Link>
+                      </>
+                    )}
+                    
+                    {(userRole === 'admin' || userRole === 'customer_service') && (
+                      <>
+                        <hr className="my-1" />
+                        <Link href="/admin/settings/support-email" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Support Email Setup
                         </Link>
                       </>
                     )}
