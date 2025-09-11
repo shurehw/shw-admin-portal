@@ -60,8 +60,6 @@ export default function CRMLayout({ children }: CRMLayoutProps) {
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-14">
               <div className="flex items-center">
-                <h2 className="text-lg font-semibold text-gray-900 mr-6">CRM</h2>
-                
                 {/* CRM Navigation */}
                 <nav className="hidden md:flex items-center space-x-1">
                   {navigation.slice(0, 7).map((item) => {
