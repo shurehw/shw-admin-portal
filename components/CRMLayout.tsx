@@ -4,7 +4,7 @@ import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AdminLayout from './AdminLayout';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Users, Building2, BarChart3, Target, Search,
   Plus, TrendingUp, Database, RefreshCw, Command, Home,
