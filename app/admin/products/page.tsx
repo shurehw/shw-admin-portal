@@ -241,8 +241,7 @@ export default function ProductsInventoryPage() {
     return { text: 'In Stock', color: 'bg-green-100 text-green-800', icon: <TrendingUp className="h-4 w-4" /> }
   }
 
-  // Calculate stats
-  const totalProducts = products.length
+  // Calculate stats - totalProducts is already tracked in state
   const lowStockCount = products.filter(p => p.is_low_stock).length
   const outOfStockCount = products.filter(p => p.is_out_of_stock).length
   const backorderCount = products.filter(p => p.backorder_enabled && p.is_out_of_stock).length
