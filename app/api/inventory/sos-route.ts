@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // SOS Backup Supabase credentials
 const sosSupabaseUrl = 'https://jvzswjyflmgenzxsrlwj.supabase.co';
+const sosSupabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2enN3anlmbG1nZW56eHNybHdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjQyNzcsImV4cCI6MjA3MDYwMDI3N30.7XMaA33LNjFfDHr2Xok_xVuqYPYvkNEoZjLAbBZikKg';
 const sosSupabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2enN3anlmbG1nZW56eHNybHdqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTAyNDI3NywiZXhwIjoyMDcwNjAwMjc3fQ.o-WD_2YwWz8cmNRBxqmSJ0lJ1gDh7h6FX21o0HYey8w';
 
 const sosSupabase = createClient(sosSupabaseUrl, sosSupabaseServiceKey);
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const lowStockOnly = searchParams.get('low_stock_only') === 'true';
 
-    // Fetch from SOS backup item table
+    // Fetch from SOS backup items table
     let query = sosSupabase
       .from('item')  // Note: table is 'item' not 'items'
       .select('*')
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     const transformedProducts = (products || []).map((item: any) => ({
       id: item.id,
       name: item.name || 'Unnamed Product',
-      sku: item.sku || `SKU-${item.id}`,
+      sku: item.sku || item.id,
       price: parseFloat(item.price) || 0,
       sale_price: item.sale_price ? parseFloat(item.sale_price) : null,
       inventory_level: parseInt(item.stock) || parseInt(item.inventory_level) || 0,
@@ -83,7 +84,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-
 // POST endpoint for creating/updating inventory items
 export async function POST(request: NextRequest) {
   try {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error in POST /api/inventory:', error);
+    console.error('Error in POST /api/inventory/sos:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to create inventory item' },
       { status: 500 }
