@@ -136,12 +136,19 @@ export default function SupportEmailSetup() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Support Email Configuration</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Connect shared support inboxes to automatically create and manage tickets for the entire team
+            Connect email accounts to automatically create and manage support tickets
           </p>
           <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Note for CS Managers:</strong> Connect your shared support email accounts here (e.g., support@shurehw.com, info@shurehw.com). 
-              These will create tickets visible to all customer service team members.
+              <strong>For Customer Service Team:</strong> Connect any support email accounts here:
+            </p>
+            <ul className="text-sm text-blue-800 mt-2 ml-4 list-disc">
+              <li>Shared inboxes (support@shurehw.com, info@shurehw.com)</li>
+              <li>Individual CS rep emails for personal ticket tracking</li>
+              <li>Department-specific emails (billing@, orders@, etc.)</li>
+            </ul>
+            <p className="text-sm text-blue-700 mt-2">
+              Enable "Auto-create tickets" to automatically convert incoming emails into support tickets.
             </p>
           </div>
         </div>
@@ -289,16 +296,19 @@ export default function SupportEmailSetup() {
         {/* Department Selection Modal (could be shown before connecting) */}
         <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Default Department for New Tickets</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Choose which department should handle tickets from new email connections
+          </p>
           <select
             value={selectedDepartment}
             onChange={(e) => setSelectedDepartment(e.target.value)}
             className="w-full max-w-xs px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
           >
-            <option value="support">Support</option>
-            <option value="sales">Sales</option>
-            <option value="billing">Billing</option>
-            <option value="technical">Technical</option>
-            <option value="general">General</option>
+            <option value="support">General Support</option>
+            <option value="customer_service">Customer Service</option>
+            <option value="billing">Billing & Payments</option>
+            <option value="orders">Order Management</option>
+            <option value="technical">Technical Support</option>
           </select>
           <p className="text-sm text-gray-500 mt-2">
             New tickets from emails will be assigned to this department by default
