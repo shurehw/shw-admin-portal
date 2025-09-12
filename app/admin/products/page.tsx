@@ -5,10 +5,11 @@ import AdminLayout from '@/components/AdminLayout'
 import { Package, Search, Grid, List, AlertTriangle, TrendingUp, TrendingDown, Eye, RefreshCw, Download, Bell, Filter } from 'lucide-react'
 
 interface Product {
-  id: number
+  id: number | string
   name: string
   sku: string
   price: number
+  cost?: number
   sale_price?: number
   inventory_level: number
   inventory_warning_level: number
@@ -21,6 +22,8 @@ interface Product {
   is_featured: boolean
   image_url?: string
   description?: string
+  purchase_description?: string
+  vendor_part_number?: string
   created_at: string
   updated_at: string
 }
@@ -196,16 +199,17 @@ export default function ProductsInventoryPage() {
 
   const exportInventory = () => {
     const csv = [
-      ['SKU', 'Product Name', 'Category', 'Price', 'Stock Level', 'Warning Level', 'Status', 'Backorder', 'Total Value'],
+      ['SKU', 'Product Name', 'Category', 'Cost', 'Price', 'Markup %', 'Stock Level', 'Warning Level', 'Status', 'Total Value'],
       ...filteredProducts.map(item => [
         item.sku,
         item.name,
         item.category,
+        item.cost ? item.cost.toFixed(2) : '0.00',
         item.price.toFixed(2),
+        item.cost ? (((item.price - item.cost) / item.cost) * 100).toFixed(1) + '%' : 'N/A',
         item.inventory_level,
         item.inventory_warning_level,
         item.is_out_of_stock ? 'Out of Stock' : item.is_low_stock ? 'Low Stock' : 'In Stock',
-        item.backorder_enabled ? 'Yes' : 'No',
         (item.inventory_level * item.price).toFixed(2)
       ])
     ].map(row => row.join(',')).join('\n')
@@ -442,10 +446,10 @@ export default function ProductsInventoryPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cost</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Level</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Backorder</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Value</th>
                 </tr>
               </thead>
@@ -478,6 +482,13 @@ export default function ProductsInventoryPage() {
                         </td>
                         <td className="px-6 py-4 text-sm">{product.sku}</td>
                         <td className="px-6 py-4 text-sm">{product.category}</td>
+                        <td className="px-6 py-4 text-sm">
+                          {product.cost ? (
+                            <span className="font-medium">${product.cost.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <div>
                             {product.sale_price ? (
@@ -500,13 +511,6 @@ export default function ProductsInventoryPage() {
                           <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full ${stockStatus.color}`}>
                             {stockStatus.icon}
                             {stockStatus.text}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            product.backorder_enabled ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {product.backorder_enabled ? 'Enabled' : 'Disabled'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm font-medium">
