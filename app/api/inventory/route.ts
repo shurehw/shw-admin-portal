@@ -10,17 +10,18 @@ const sosSupabase = createClient(sosSupabaseUrl, sosSupabaseServiceKey);
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit') || '10000'; // Increase default limit
+    const limit = searchParams.get('limit') || '100'; // Default to 100 items per page
+    const offset = searchParams.get('offset') || '0'; // Default offset to 0
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const lowStockOnly = searchParams.get('low_stock_only') === 'true';
 
-    // Fetch from SOS backup items table
+    // Fetch from SOS backup items table with pagination
     let query = sosSupabase
       .from('items')  // Try 'items' table
       .select('*', { count: 'exact' })
       .order('name', { ascending: true })
-      .limit(parseInt(limit));
+      .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
     if (category && category !== 'all') {
       query = query.eq('category', category);

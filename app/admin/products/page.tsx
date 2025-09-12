@@ -54,6 +54,8 @@ export default function ProductsInventoryPage() {
   const [showAlerts, setShowAlerts] = useState(false)
   const [activeTab, setActiveTab] = useState<'products' | 'alerts'>('products')
   const [totalProducts, setTotalProducts] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [productsPerPage] = useState(100)
 
   useEffect(() => {
     fetchProducts()
@@ -63,13 +65,14 @@ export default function ProductsInventoryPage() {
       checkStockAlerts()
     }, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [categoryFilter, stockFilter, sortBy])
+  }, [categoryFilter, stockFilter, sortBy, currentPage])
 
   const fetchProducts = async () => {
     try {
       setLoading(true)
       // Fetch from inventory API which includes stock data
-      const response = await fetch(`/api/inventory?category=${categoryFilter}&low_stock_only=${stockFilter === 'lowstock' ? 'true' : 'false'}`)
+      const offset = (currentPage - 1) * productsPerPage
+      const response = await fetch(`/api/inventory?category=${categoryFilter}&low_stock_only=${stockFilter === 'lowstock' ? 'true' : 'false'}&limit=${productsPerPage}&offset=${offset}`)
       const data = await response.json()
       
       if (data.data) {
@@ -384,7 +387,10 @@ export default function ProductsInventoryPage() {
             
             <select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value)
+                setCurrentPage(1) // Reset to first page on filter change
+              }}
               className="px-3 py-2 border rounded-lg"
             >
               <option value="all">All Categories</option>
@@ -396,7 +402,10 @@ export default function ProductsInventoryPage() {
             
             <select
               value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
+              onChange={(e) => {
+                setStockFilter(e.target.value)
+                setCurrentPage(1) // Reset to first page on filter change
+              }}
               className="px-3 py-2 border rounded-lg"
             >
               <option value="all">All Stock Status</option>
@@ -564,6 +573,56 @@ export default function ProductsInventoryPage() {
             )}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-6 bg-white rounded-lg shadow p-4">
+          <div className="text-sm text-gray-600">
+            Showing {((currentPage - 1) * productsPerPage) + 1} - {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            <div className="flex gap-1">
+              {Array.from({ length: Math.ceil(totalProducts / productsPerPage) }, (_, i) => i + 1)
+                .filter(page => {
+                  // Show first, last, current, and surrounding pages
+                  const totalPages = Math.ceil(totalProducts / productsPerPage)
+                  return page === 1 || 
+                         page === totalPages || 
+                         Math.abs(page - currentPage) <= 1
+                })
+                .map((page, idx, arr) => (
+                  <div key={page} className="flex items-center">
+                    {idx > 0 && arr[idx - 1] !== page - 1 && (
+                      <span className="px-2">...</span>
+                    )}
+                    <button
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === page 
+                          ? 'bg-blue-600 text-white' 
+                          : 'border hover:bg-gray-50'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </div>
+                ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalProducts / productsPerPage), prev + 1))}
+              disabled={currentPage >= Math.ceil(totalProducts / productsPerPage)}
+              className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   )
