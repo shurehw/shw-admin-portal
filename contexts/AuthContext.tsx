@@ -94,7 +94,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = getSupabaseBrowser();
       console.log('Fetching user profile for userId:', userId);
       
-      // First check if user_profiles table exists and has data
+      // Get the current user's email
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const userEmail = authUser?.email;
+      
+      // First, use our API to check/create/fix the role
+      try {
+        const roleResponse = await fetch(`/api/auth/check-role?userId=${userId}&email=${userEmail}`);
+        const roleData = await roleResponse.json();
+        console.log('Role check response:', roleData);
+        
+        if (roleData.profile) {
+          // Use the profile from our API which ensures role is set
+          const profile = roleData.profile;
+          setUser({
+            id: userId,
+            email: profile.email,
+            full_name: profile.full_name,
+            role: profile.role || 'admin',
+            roles: [profile.role || 'admin'],
+            department: profile.department,
+            phone: profile.phone,
+            status: profile.status || 'active',
+            created_at: profile.created_at,
+            last_sign_in_at: new Date().toISOString(),
+          });
+          console.log('User set with role:', profile.role || 'admin');
+          return;
+        }
+      } catch (apiError) {
+        console.error('Role API error, falling back to direct query:', apiError);
+      }
+      
+      // Fallback to direct Supabase query
       const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -196,11 +228,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         
+        // Ensure role is set, default to admin if not present
+        const userRole = profile.role || 'admin';
+        console.log('Setting user with role:', userRole);
+        
         setUser({
           id: userId,
           email: profile.email,
           full_name: profile.full_name,
-          role: profile.role,
+          role: userRole,
           roles: [profile.role], // Add roles array
           department: profile.department,
           phone: profile.phone,

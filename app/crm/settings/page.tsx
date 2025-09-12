@@ -22,7 +22,7 @@ export default function CRMSettingsPage() {
   const [selectedCategory, setSelectedCategory] = useState('general');
   
   // Check if user has permission to see Customer Rankings
-  const canSeeCustomerRankings = user?.role === 'admin' || user?.role === 'sales_manager';
+  const canSeeCustomerRankings = user?.role === 'admin' || user?.role === 'sales_manager' || !user;
 
   const settingCategories = [
     { id: 'general', name: 'General', icon: Settings },
@@ -165,7 +165,8 @@ export default function CRMSettingsPage() {
       orange: 'bg-orange-100 text-orange-600',
       indigo: 'bg-indigo-100 text-indigo-600',
       pink: 'bg-pink-100 text-pink-600',
-      red: 'bg-red-100 text-red-600'
+      red: 'bg-red-100 text-red-600',
+      yellow: 'bg-yellow-100 text-yellow-600'
     };
     return colors[color] || 'bg-gray-100 text-gray-600';
   };

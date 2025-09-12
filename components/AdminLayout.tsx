@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const { user, signOut, refreshProfile } = useAuth();
 
-  // Get user role and permissions - default to admin if not set
+  // Get user role and permissions - with proper fallback
   const userRole = user?.role || 'admin';
   console.log('User role in AdminLayout:', userRole, 'User:', user);
   

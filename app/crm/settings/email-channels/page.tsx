@@ -32,6 +32,7 @@ export default function EmailChannelsPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<EmailChannel | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [connectionMethod, setConnectionMethod] = useState<'oauth' | 'manual'>('oauth');
 
   useEffect(() => {
     loadChannels();
@@ -158,9 +159,21 @@ export default function EmailChannelsPage() {
   };
 
   const getProviderIcon = (provider: string) => {
-    // Gmail icon simplified
+    // Gmail logo
+    if (provider === 'gmail') {
+      return (
+        <svg className="w-10 h-10" viewBox="0 0 48 48">
+          <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z"/>
+          <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z"/>
+          <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17"/>
+          <path fill="#c62828" d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z"/>
+          <path fill="#fbc02d" d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0 C43.076,8,45,9.924,45,12.298z"/>
+        </svg>
+      );
+    }
+    // Default mail icon for other providers
     return (
-      <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+      <div className="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center">
         <Mail className="h-6 w-6 text-white" />
       </div>
     );
@@ -313,39 +326,149 @@ export default function EmailChannelsPage() {
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h2 className="text-xl font-semibold mb-4">Connect Email Channel</h2>
               
-              <div className="space-y-4">
+              {/* Connection Method Tabs */}
+              <div className="flex border-b mb-4">
                 <button
-                  onClick={handleConnectGmail}
-                  disabled={connecting}
-                  className="w-full p-4 border rounded-lg hover:bg-gray-50 flex items-center gap-3"
+                  onClick={() => setConnectionMethod('oauth')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium ${
+                    connectionMethod === 'oauth'
+                      ? 'border-b-2 border-blue-500 text-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                    <Mail className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Gmail</div>
-                    <div className="text-sm text-gray-500">Connect your Gmail account</div>
-                  </div>
-                  {connecting && <Loader2 className="h-5 w-5 animate-spin" />}
+                  OAuth (Recommended)
                 </button>
-
                 <button
-                  className="w-full p-4 border rounded-lg hover:bg-gray-50 flex items-center gap-3 opacity-50 cursor-not-allowed"
-                  disabled
+                  onClick={() => setConnectionMethod('manual')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium ${
+                    connectionMethod === 'manual'
+                      ? 'border-b-2 border-blue-500 text-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <Mail className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="font-medium">Outlook</div>
-                    <div className="text-sm text-gray-500">Coming soon</div>
-                  </div>
+                  App Password
                 </button>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
+              {connectionMethod === 'oauth' ? (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      OAuth provides secure access without sharing your password. 
+                      Your emails will be automatically tracked and logged to contacts.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={handleConnectGmail}
+                    disabled={connecting}
+                    className="w-full p-4 border rounded-lg hover:bg-gray-50 flex items-center gap-3"
+                  >
+                    <svg className="w-10 h-10" viewBox="0 0 48 48">
+                      <path fill="#4caf50" d="M45,16.2l-5,2.75l-5,4.75L35,40h7c1.657,0,3-1.343,3-3V16.2z"/>
+                      <path fill="#1e88e5" d="M3,16.2l3.614,1.71L13,23.7V40H6c-1.657,0-3-1.343-3-3V16.2z"/>
+                      <polygon fill="#e53935" points="35,11.2 24,19.45 13,11.2 12,17 13,23.7 24,31.95 35,23.7 36,17"/>
+                      <path fill="#c62828" d="M3,12.298V16.2l10,7.5V11.2L9.876,8.859C9.132,8.301,8.228,8,7.298,8h0C4.924,8,3,9.924,3,12.298z"/>
+                      <path fill="#fbc02d" d="M45,12.298V16.2l-10,7.5V11.2l3.124-2.341C38.868,8.301,39.772,8,40.702,8h0 C43.076,8,45,9.924,45,12.298z"/>
+                    </svg>
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">Connect with Gmail</div>
+                      <div className="text-sm text-gray-500">Secure OAuth authentication</div>
+                    </div>
+                    {connecting && <Loader2 className="h-5 w-5 animate-spin" />}
+                  </button>
+
+                  <div className="text-xs text-gray-500">
+                    <p className="font-medium mb-1">What happens next:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Emails automatically logged to contacts</li>
+                      <li>Track email opens and responses</li>
+                      <li>Create deals from email conversations</li>
+                      <li>Team visibility on all communications</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      Manual setup using app-specific password. Limited tracking capabilities.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="email-input"
+                      placeholder="your-email@gmail.com"
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      App Password
+                    </label>
+                    <input
+                      type="password"
+                      id="password-input"
+                      placeholder="Enter app-specific password"
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      For Gmail, use an <a href="https://support.google.com/accounts/answer/185833" target="_blank" className="text-blue-600 hover:underline">app-specific password</a>
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={async () => {
+                      const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
+                      const password = (document.getElementById('password-input') as HTMLInputElement)?.value;
+                      
+                      if (!email || !password) {
+                        alert('Please enter email and app password');
+                        return;
+                      }
+
+                      setConnecting(true);
+                      try {
+                        const response = await fetch('/api/crm/email-channels/simple', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email, password, provider: 'gmail' })
+                        });
+
+                        if (response.ok) {
+                          alert('Email channel connected successfully!');
+                          setShowAddModal(false);
+                          loadChannels();
+                        } else {
+                          const error = await response.json();
+                          alert(`Failed to connect: ${error.error}`);
+                        }
+                      } catch (error) {
+                        alert('Failed to connect email channel');
+                      } finally {
+                        setConnecting(false);
+                      }
+                    }}
+                    disabled={connecting}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {connecting ? 'Connecting...' : 'Connect with App Password'}
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end">
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setConnectionMethod('oauth');
+                  }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel
