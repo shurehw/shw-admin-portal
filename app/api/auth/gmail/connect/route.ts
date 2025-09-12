@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Gmail OAuth configuration from environment variables
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+// Gmail OAuth configuration from environment variables - trim any whitespace
+const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '').trim();
+const GOOGLE_CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
 
 // Determine the redirect URI based on the request URL
 function getRedirectUri(request: NextRequest) {
@@ -43,10 +43,22 @@ const SCOPES = [
 export async function GET(request: NextRequest) {
   try {
     // Check if we have Google OAuth credentials
+    console.log('Client ID length:', GOOGLE_CLIENT_ID.length);
+    console.log('Client ID (first 20 chars):', GOOGLE_CLIENT_ID.substring(0, 20));
+    console.log('Client ID (last 10 chars):', GOOGLE_CLIENT_ID.substring(GOOGLE_CLIENT_ID.length - 10));
+    
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
       console.error('Missing Google OAuth credentials');
       return NextResponse.redirect(
         `/crm/settings/email-channels?error=config_missing`
+      );
+    }
+    
+    // Validate client ID format
+    if (!GOOGLE_CLIENT_ID.match(/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/)) {
+      console.error('Invalid Google Client ID format:', GOOGLE_CLIENT_ID);
+      return NextResponse.redirect(
+        `/crm/settings/email-channels?error=invalid_client_id`
       );
     }
 
