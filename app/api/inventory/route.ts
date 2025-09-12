@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const lowStockOnly = searchParams.get('low_stock_only') === 'true';
 
-    // Fetch from SOS backup item table
+    // Fetch from SOS backup items table
     let query = sosSupabase
-      .from('item')  // Note: table is 'item' not 'items'
+      .from('items')  // Try 'items' table
       .select('*')
       .order('name', { ascending: true })
       .limit(parseInt(limit));
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const { data, error } = await sosSupabase
-      .from('item')
+      .from('items')
       .insert([body])
       .select()
       .single();

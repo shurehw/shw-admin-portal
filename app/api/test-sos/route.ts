@@ -9,26 +9,43 @@ export async function GET() {
   try {
     const sosSupabase = createClient(sosSupabaseUrl, sosSupabaseServiceKey);
     
-    // Test connection to item table
+    // Try different table names
     const { data: items, error: itemError, count } = await sosSupabase
-      .from('item')
+      .from('items')  // Try 'items' instead of 'item'
       .select('*', { count: 'exact', head: false })
       .limit(5);
     
-    // Also check what columns exist
-    const { data: sampleItem } = await sosSupabase
+    // Also try 'item' table
+    const { data: item, error: itemSingularError } = await sosSupabase
       .from('item')
       .select('*')
-      .limit(1)
-      .single();
+      .limit(5);
+    
+    // Try 'products' table
+    const { data: products, error: productsError } = await sosSupabase
+      .from('products')
+      .select('*')
+      .limit(5);
     
     return NextResponse.json({
       connection: 'success',
-      itemTable: {
-        error: itemError?.message || null,
-        count: count || 0,
-        sample: items || [],
-        columns: sampleItem ? Object.keys(sampleItem) : []
+      tables: {
+        items: {
+          error: itemError?.message || null,
+          count: count || 0,
+          sample: items || [],
+          columns: items?.[0] ? Object.keys(items[0]) : []
+        },
+        item: {
+          error: itemSingularError?.message || null,
+          sample: item || [],
+          columns: item?.[0] ? Object.keys(item[0]) : []
+        },
+        products: {
+          error: productsError?.message || null,
+          sample: products || [],
+          columns: products?.[0] ? Object.keys(products[0]) : []
+        }
       },
       debug: {
         url: sosSupabaseUrl,
