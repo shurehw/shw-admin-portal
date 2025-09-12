@@ -72,20 +72,28 @@ export default function SupportEmailSetup() {
     }
   };
 
-  const handleDisconnect = async (accountId: string) => {
+  const handleDisconnect = async (accountId: string, accountEmail?: string) => {
     if (!confirm('Are you sure you want to disconnect this email account?')) return;
     
     try {
-      const response = await fetch(`/api/admin/support-email/accounts/${accountId}`, {
+      // Try both ID and email for backwards compatibility
+      const identifier = accountId || accountEmail;
+      const response = await fetch(`/api/admin/support-email/accounts/${identifier}`, {
         method: 'DELETE',
       });
       
       if (response.ok) {
-        setAccounts(accounts.filter(a => a.id !== accountId));
-        alert('Account disconnected successfully');
+        setAccounts(accounts.filter(a => a.id !== accountId && a.email !== accountEmail));
+        setSuccessMessage('Account disconnected successfully');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to disconnect');
       }
     } catch (error) {
-      alert('Error disconnecting account');
+      console.error('Error disconnecting account:', error);
+      setErrorMessage(`Error disconnecting account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTimeout(() => setErrorMessage(null), 5000);
     }
   };
 
@@ -257,7 +265,7 @@ export default function SupportEmailSetup() {
                           <RefreshCw className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDisconnect(account.id)}
+                          onClick={() => handleDisconnect(account.id, account.email)}
                           className="p-2 text-gray-400 hover:text-red-600"
                           title="Disconnect"
                         >
