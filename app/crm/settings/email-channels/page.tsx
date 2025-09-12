@@ -95,10 +95,11 @@ export default function EmailChannelsPage() {
     try {
       // Get current user info
       const userId = user?.id || 'unknown';
-      const department = 'support'; // Default, could be selected by user
+      const department = 'sales'; // For CRM, use sales department
+      const type = 'crm'; // Mark as CRM connection
       
       // Redirect to Gmail OAuth flow
-      window.location.href = `/api/auth/gmail/connect?userId=${userId}&department=${department}`;
+      window.location.href = `/api/auth/gmail/connect?userId=${userId}&department=${department}&type=${type}`;
     } catch (error) {
       console.error('Error connecting Gmail:', error);
       alert('Failed to initiate Gmail connection');

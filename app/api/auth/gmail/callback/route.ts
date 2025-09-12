@@ -37,21 +37,40 @@ function getRedirectUri(request: NextRequest): string {
 }
 
 // Helper function to build error redirect
-function buildErrorRedirect(request: NextRequest, error: string, details?: string): string {
+function buildErrorRedirect(request: NextRequest, error: string, details?: string, stateData?: any): string {
   const host = request.headers.get('host') || 'admin.shurehw.com';
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
+  
+  // Determine path based on state data
+  let path = '/crm/settings/email-channels'; // Default to CRM
+  
+  if (stateData) {
+    if (stateData.type === 'crm') {
+      path = '/crm/settings/email-channels';
+    } else if (stateData.type === 'support' || stateData.department === 'support') {
+      path = '/admin/settings/support-email';
+    }
+  }
+  
   const params = new URLSearchParams({ error });
   if (details) params.append('details', details);
-  return `${protocol}://${host}/admin/settings/support-email?${params}`;
+  return `${protocol}://${host}${path}?${params}`;
 }
 
 // Helper function to build success redirect
-function buildSuccessRedirect(request: NextRequest, email: string, isSupport: boolean): string {
+function buildSuccessRedirect(request: NextRequest, email: string, stateData: any): string {
   const host = request.headers.get('host') || 'admin.shurehw.com';
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
-  const path = isSupport 
-    ? '/admin/settings/support-email'
-    : '/crm/settings/email-channels';
+  
+  // Determine path based on type or department
+  let path = '/crm/settings/email-channels'; // Default to CRM
+  
+  if (stateData.type === 'crm') {
+    path = '/crm/settings/email-channels';
+  } else if (stateData.type === 'support' || stateData.department === 'support') {
+    path = '/admin/settings/support-email';
+  }
+  
   return `${protocol}://${host}${path}?success=connected&email=${encodeURIComponent(email)}`;
 }
 
@@ -68,18 +87,18 @@ export async function GET(request: NextRequest) {
     // Handle OAuth denial
     if (error) {
       console.error('OAuth was denied by user:', error);
-      return NextResponse.redirect(buildErrorRedirect(request, 'oauth_denied', 'You denied the authorization request'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'oauth_denied', 'You denied the authorization request', null));
     }
 
     // Validate required parameters
     if (!code) {
       console.error('Missing authorization code');
-      return NextResponse.redirect(buildErrorRedirect(request, 'missing_code', 'Authorization code is missing'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'missing_code', 'Authorization code is missing', null));
     }
 
     if (!state) {
       console.error('Missing state parameter');
-      return NextResponse.redirect(buildErrorRedirect(request, 'missing_state', 'State parameter is missing'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'missing_state', 'State parameter is missing', null));
     }
 
     // 2. Decode and validate state
@@ -89,7 +108,7 @@ export async function GET(request: NextRequest) {
       console.log('State data decoded:', { userId: stateData.userId, department: stateData.department });
     } catch (err) {
       console.error('Failed to decode state:', err);
-      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_state', 'Invalid state parameter'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_state', 'Invalid state parameter', null));
     }
 
     // 3. Exchange authorization code for tokens
@@ -124,7 +143,7 @@ export async function GET(request: NextRequest) {
       });
     } catch (fetchError) {
       console.error('Network error during token exchange:', fetchError);
-      return NextResponse.redirect(buildErrorRedirect(request, 'network_error', 'Failed to connect to Google'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'network_error', 'Failed to connect to Google', stateData));
     }
 
     if (!tokenResponse.ok) {
@@ -135,9 +154,9 @@ export async function GET(request: NextRequest) {
       try {
         const errorData = JSON.parse(errorText);
         const errorMessage = errorData.error_description || errorData.error || 'Token exchange failed';
-        return NextResponse.redirect(buildErrorRedirect(request, 'token_exchange_failed', errorMessage));
+        return NextResponse.redirect(buildErrorRedirect(request, 'token_exchange_failed', errorMessage, stateData));
       } catch {
-        return NextResponse.redirect(buildErrorRedirect(request, 'token_exchange_failed', `HTTP ${tokenResponse.status}`));
+        return NextResponse.redirect(buildErrorRedirect(request, 'token_exchange_failed', `HTTP ${tokenResponse.status}`, stateData));
       }
     }
 
@@ -147,7 +166,7 @@ export async function GET(request: NextRequest) {
       console.log('Tokens received successfully');
     } catch (parseError) {
       console.error('Failed to parse token response:', parseError);
-      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_token_response', 'Invalid response from Google'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_token_response', 'Invalid response from Google', stateData));
     }
 
     // 4. Get user information
@@ -161,12 +180,12 @@ export async function GET(request: NextRequest) {
       });
     } catch (fetchError) {
       console.error('Network error fetching user info:', fetchError);
-      return NextResponse.redirect(buildErrorRedirect(request, 'user_info_network_error', 'Failed to get user information'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'user_info_network_error', 'Failed to get user information', stateData));
     }
 
     if (!userInfoResponse.ok) {
       console.error('Failed to get user info:', userInfoResponse.status);
-      return NextResponse.redirect(buildErrorRedirect(request, 'user_info_failed', `HTTP ${userInfoResponse.status}`));
+      return NextResponse.redirect(buildErrorRedirect(request, 'user_info_failed', `HTTP ${userInfoResponse.status}`, stateData));
     }
 
     let userInfo;
@@ -175,7 +194,7 @@ export async function GET(request: NextRequest) {
       console.log('User info received:', userInfo.email);
     } catch (parseError) {
       console.error('Failed to parse user info:', parseError);
-      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_user_info', 'Invalid user information response'));
+      return NextResponse.redirect(buildErrorRedirect(request, 'invalid_user_info', 'Invalid user information response', stateData));
     }
 
     // 5. Store the connection (with graceful fallback)
@@ -257,12 +276,12 @@ export async function GET(request: NextRequest) {
 
     // 6. Redirect to success page
     console.log('OAuth flow completed successfully, redirecting...');
-    return NextResponse.redirect(buildSuccessRedirect(request, userInfo.email, isSupport));
+    return NextResponse.redirect(buildSuccessRedirect(request, userInfo.email, stateData));
 
   } catch (unexpectedError) {
     // Catch-all for any unexpected errors
     console.error('Unexpected error in Gmail OAuth callback:', unexpectedError);
     const errorMessage = unexpectedError instanceof Error ? unexpectedError.message : 'Unknown error';
-    return NextResponse.redirect(buildErrorRedirect(request, 'unexpected_error', errorMessage));
+    return NextResponse.redirect(buildErrorRedirect(request, 'unexpected_error', errorMessage, null));
   }
 }
