@@ -16,9 +16,24 @@ const GOOGLE_CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
 
 // Helper function to build redirect URI
 function getRedirectUri(request: NextRequest): string {
-  const host = request.headers.get('host') || 'admin.shurehw.com';
+  // For production, always use the canonical domain
+  const host = request.headers.get('host');
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const actualHost = forwardedHost || host;
+  
+  if (actualHost === 'admin.shurehw.com' || forwardedHost === 'admin.shurehw.com') {
+    return 'https://admin.shurehw.com/api/auth/gmail/callback';
+  }
+  
+  // For local development
+  if (actualHost?.includes('localhost')) {
+    const port = actualHost.split(':')[1] || '3000';
+    return `http://localhost:${port}/api/auth/gmail/callback`;
+  }
+  
+  // For Vercel preview deployments
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
-  return `${protocol}://${host}/api/auth/gmail/callback`;
+  return `${protocol}://${actualHost}/api/auth/gmail/callback`;
 }
 
 // Helper function to build error redirect
