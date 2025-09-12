@@ -10,7 +10,7 @@ const sosSupabase = createClient(sosSupabaseUrl, sosSupabaseServiceKey);
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = searchParams.get('limit') || '100';
+    const limit = searchParams.get('limit') || '10000'; // Increase default limit
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const lowStockOnly = searchParams.get('low_stock_only') === 'true';
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Fetch from SOS backup items table
     let query = sosSupabase
       .from('items')  // Try 'items' table
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('name', { ascending: true })
       .limit(parseInt(limit));
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       query = query.or(`name.ilike.%${search}%,sku.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
-    const { data: products, error } = await query;
+    const { data: products, error, count } = await query;
 
     if (error) {
       console.error('Error fetching from SOS Supabase:', error);
@@ -74,7 +74,9 @@ export async function GET(request: NextRequest) {
       success: true,
       data: finalProducts,
       source: 'sos_backup',
-      total: finalProducts.length
+      total: finalProducts.length,
+      totalInDatabase: count || 0,
+      message: count ? `Showing ${finalProducts.length} of ${count} total products` : null
     });
 
   } catch (error) {

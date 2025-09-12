@@ -53,6 +53,7 @@ export default function ProductsInventoryPage() {
   const [sortBy, setSortBy] = useState('name')
   const [showAlerts, setShowAlerts] = useState(false)
   const [activeTab, setActiveTab] = useState<'products' | 'alerts'>('products')
+  const [totalProducts, setTotalProducts] = useState(0)
 
   useEffect(() => {
     fetchProducts()
@@ -72,18 +73,15 @@ export default function ProductsInventoryPage() {
       const data = await response.json()
       
       if (data.data) {
-        setProducts(data.data.map((item: any) => ({
-          ...item,
-          is_low_stock: item.is_low_stock || false,
-          is_out_of_stock: item.is_out_of_stock || false,
-          inventory_warning_level: item.inventory_warning_level || 10,
-          backorder_enabled: item.backorder_enabled || false,
-          is_visible: true,
-          is_featured: false,
-          brand: 'ShurePrint',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })))
+        setProducts(data.data)
+        setTotalProducts(data.totalInDatabase || data.total || data.data.length)
+        
+        // Log the count for debugging
+        console.log(`Loaded ${data.data.length} products out of ${data.totalInDatabase} total`)
+        
+        if (data.message) {
+          console.log(data.message)
+        }
       }
     } catch (error) {
       console.error('Error fetching products:', error)
