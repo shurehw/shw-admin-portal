@@ -7,19 +7,27 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
 // Determine the redirect URI based on the request URL
 function getRedirectUri(request: NextRequest) {
   const host = request.headers.get('host');
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const actualHost = forwardedHost || host;
+  
+  console.log('Debug - Host:', host, 'Forwarded Host:', forwardedHost, 'Using:', actualHost);
+  
+  // For production, always use the canonical domain
+  if (actualHost === 'admin.shurehw.com' || forwardedHost === 'admin.shurehw.com') {
+    return 'https://admin.shurehw.com/api/auth/gmail/callback';
+  }
   
   // Handle different environments
-  if (host?.includes('localhost')) {
-    return `http://${host}/api/auth/gmail/callback`;
-  } else if (host === 'admin.shurehw.com') {
-    return 'https://admin.shurehw.com/api/auth/gmail/callback';
-  } else if (host?.includes('vercel.app')) {
-    return `https://${host}/api/auth/gmail/callback`;
+  if (actualHost?.includes('localhost')) {
+    const port = actualHost.split(':')[1] || '3000';
+    return `http://localhost:${port}/api/auth/gmail/callback`;
+  } else if (actualHost?.includes('vercel.app')) {
+    return `https://${actualHost}/api/auth/gmail/callback`;
   }
   
   // Default fallback
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
-  return `${protocol}://${host}/api/auth/gmail/callback`;
+  return `${protocol}://${actualHost}/api/auth/gmail/callback`;
 }
 
 // Gmail OAuth scopes for email access
@@ -63,8 +71,14 @@ export async function GET(request: NextRequest) {
     console.log('Using redirect URI:', redirectUri);
     console.log('Using Client ID:', GOOGLE_CLIENT_ID);
     
-    // Use specific scopes that don't require verification
-    const limitedScopes = [
+    // For test users, we can use Gmail scopes
+    const isTestMode = true; // Since you're added as a test user
+    const scopes = isTestMode ? [
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ].join(' ') : [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
       'openid'
@@ -74,7 +88,7 @@ export async function GET(request: NextRequest) {
     authUrl.searchParams.append('client_id', GOOGLE_CLIENT_ID);
     authUrl.searchParams.append('redirect_uri', redirectUri);
     authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('scope', limitedScopes);
+    authUrl.searchParams.append('scope', scopes);
     authUrl.searchParams.append('access_type', 'offline');
     authUrl.searchParams.append('prompt', 'consent');
     authUrl.searchParams.append('state', state);
