@@ -5,14 +5,14 @@ export const dynamic = 'force-dynamic';
 
 // Initialize Supabase if credentials are available
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = supabaseUrl && supabaseKey 
   ? createClient(supabaseUrl, supabaseKey)
   : null;
 
-// OAuth credentials from environment variables
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+// OAuth credentials from environment variables - trim whitespace
+const GOOGLE_CLIENT_ID = (process.env.GOOGLE_CLIENT_ID || '').trim();
+const GOOGLE_CLIENT_SECRET = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
 
 // Helper function to build redirect URI
 function getRedirectUri(request: NextRequest): string {
@@ -80,6 +80,17 @@ export async function GET(request: NextRequest) {
     // 3. Exchange authorization code for tokens
     console.log('Exchanging authorization code for tokens...');
     const redirectUri = getRedirectUri(request);
+    
+    // Log the exact values being used
+    console.log('Token exchange parameters:', {
+      clientIdLength: GOOGLE_CLIENT_ID.length,
+      clientIdFirst20: GOOGLE_CLIENT_ID.substring(0, 20),
+      clientSecretLength: GOOGLE_CLIENT_SECRET.length,
+      clientSecretFirst5: GOOGLE_CLIENT_SECRET.substring(0, 5),
+      redirectUri,
+      codeLength: code.length,
+      codeFirst10: code.substring(0, 10)
+    });
     
     let tokenResponse;
     try {
