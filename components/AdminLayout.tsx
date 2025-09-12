@@ -8,7 +8,7 @@ import {
   Home, Building, FileText, Package, CreditCard, Users, 
   Settings, LogOut, Menu, X, Bell, Search, ChevronDown,
   BarChart3, HelpCircle, Shield, Image, Calculator, Truck, UserCheck, Command, LifeBuoy, DollarSign,
-  FilePlus, RefreshCw, Archive, Mail
+  FilePlus, RefreshCw, Archive, Mail, PlusCircle
 } from 'lucide-react';
 import CommandPalette from '@/components/CommandPalette';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,6 +45,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Custom Catalog', href: '/admin/custom-catalog', icon: Package, roles: ['admin', 'sales_rep'] },
+      { name: 'Quote Builder', href: '/admin/quotes/builder', icon: PlusCircle, roles: ['admin', 'sales_rep'] },
       { name: 'Quotes', href: '/admin/quotes', icon: FileText, roles: ['admin', 'sales_rep'] },
       { name: 'Quote Requests', href: '/admin/quotes/requests', icon: FileText, roles: ['admin', 'sales_rep'] },
       { name: 'Invoices', href: '/admin/invoices', icon: CreditCard, roles: ['admin', 'sales_rep', 'customer_service'] },
