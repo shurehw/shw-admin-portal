@@ -55,17 +55,23 @@ export default function ProductsInventoryPage() {
   const [activeTab, setActiveTab] = useState<'products' | 'alerts'>('products')
   const [totalProducts, setTotalProducts] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [productsPerPage] = useState(100)
+  const [productsPerPage, setProductsPerPage] = useState(100)
+  const [categories, setCategories] = useState<string[]>([])
 
   useEffect(() => {
     fetchProducts()
     fetchAlerts()
+    fetchCategories()
     // Auto-refresh every 5 minutes
     const interval = setInterval(() => {
       checkStockAlerts()
     }, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [categoryFilter, stockFilter, sortBy, currentPage])
+  }, [])
+  
+  useEffect(() => {
+    fetchProducts()
+  }, [categoryFilter, stockFilter, sortBy, currentPage, productsPerPage])
 
   const fetchProducts = async () => {
     try {
@@ -151,6 +157,19 @@ export default function ProductsInventoryPage() {
       ])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/inventory/categories')
+      const data = await response.json()
+      if (data.success && data.categories) {
+        setCategories(data.categories)
+        console.log(`Loaded ${data.categories.length} categories`)
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
     }
   }
 
@@ -394,10 +413,11 @@ export default function ProductsInventoryPage() {
               className="px-3 py-2 border rounded-lg"
             >
               <option value="all">All Categories</option>
-              <option value="keycards">Keycards</option>
-              <option value="menus">Menu Holders</option>
-              <option value="doorhangers">Door Hangers</option>
-              <option value="signage">Signage</option>
+              {categories.map(category => (
+                <option key={category} value={category.toLowerCase()}>
+                  {category}
+                </option>
+              ))}
             </select>
             
             <select
@@ -424,6 +444,19 @@ export default function ProductsInventoryPage() {
               <option value="stock_low">Stock: Low to High</option>
               <option value="stock_high">Stock: High to Low</option>
               <option value="value">Inventory Value</option>
+            </select>
+
+            <select
+              value={productsPerPage}
+              onChange={(e) => {
+                setProductsPerPage(Number(e.target.value))
+                setCurrentPage(1) // Reset to first page when changing items per page
+              }}
+              className="px-3 py-2 border rounded-lg"
+            >
+              <option value="20">20 per page</option>
+              <option value="50">50 per page</option>
+              <option value="100">100 per page</option>
             </select>
 
             <div className="flex gap-2 ml-auto">
