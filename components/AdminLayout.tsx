@@ -29,7 +29,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   console.log('User role in AdminLayout:', userRole, 'User:', user);
   
   // Define navigation based on user role
-  const getNavigation = (email: string) => {
+  const getNavigation = () => {
     const baseNav = [
       { name: 'Dashboard', href: '/admin/dashboard', icon: Home, roles: ['admin', 'sales_rep', 'customer_service', 'production', 'art_team', 'viewer'] },
     ];
@@ -44,10 +44,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
-      // Special item only for jacob@shurehw.com and admin@shurehw.com
-      ...((email === 'jacob@shurehw.com' || email === 'admin@shurehw.com') ? [
-        { name: 'Products-SOS Manager', href: '/admin/products-sos-optimized', icon: Package, roles: ['admin'] }
-      ] : []),
+      { name: 'Products-SOS Manager', href: '/admin/products-sos-optimized', icon: Package, roles: ['admin'] },
       { name: 'Custom Catalog', href: '/admin/custom-catalog', icon: Package, roles: ['admin', 'sales_rep'] },
       { name: 'Quote Builder', href: '/admin/quotes/builder', icon: PlusCircle, roles: ['admin', 'sales_rep'] },
       { name: 'Quotes', href: '/admin/quotes', icon: FileText, roles: ['admin', 'sales_rep'] },
@@ -77,7 +74,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
   const userEmail = user?.email || '';
   
-  const navigation = getNavigation(userEmail);
+  const navigation = getNavigation();
 
   const handleSignOut = async () => {
     signOut();
