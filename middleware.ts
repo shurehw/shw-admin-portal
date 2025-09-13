@@ -8,17 +8,9 @@ export async function middleware(req: NextRequest) {
   })
 
   // Create a Supabase client configured to use the server component's cookies
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  if (!url || !key) {
-    console.error('Missing Supabase environment variables in middleware')
-    return supabaseResponse
-  }
-  
   const supabase = createServerClient(
-    url,
-    key,
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://jvzswjyflmgenzxsrlwj.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2enN3anlmbG1nZW56eHNybHdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjQyNzcsImV4cCI6MjA3MDYwMDI3N30.TRJhRi8eTg4wJBqyGDx8Ui39Ap8gXhWULsLEWlaSM8g',
     {
       cookies: {
         getAll() {
