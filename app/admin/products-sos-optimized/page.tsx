@@ -56,28 +56,56 @@ export default function ProductsSOSOptimized() {
 
   useEffect(() => {
     fetchInitialData()
-    // Preload all parents in background for modal
-    loadAllParentsForModal()
   }, [])
 
   const fetchInitialData = async () => {
     setLoading(true)
     try {
-      // Fetch first page of parents
-      const parentsRes = await fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`)
-      const parentsData = await parentsRes.json()
+      // Fetch everything in parallel for maximum speed
+      const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
+        fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
+        fetch('/api/products/unmapped-sos-items'),
+        fetch('/api/products/parents-with-sos-items-lite?page=0&limit=1000') // Preload for modal
+      ])
+      
+      const [parentsData, unmappedData, allParentsData] = await Promise.all([
+        parentsRes.json(),
+        unmappedRes.json(),
+        allParentsRes.json()
+      ])
+      
       setParents(parentsData.parents || [])
       setTotalParents(parentsData.total || 0)
       setCurrentPage(0)
+      setUnmappedSosItems(unmappedData.items || [])
+      setAllParentsForModal(allParentsData.parents || [])
       
-      // Fetch unmapped in background
-      fetch('/api/products/unmapped-sos-items')
-        .then(res => res.json())
-        .then(data => setUnmappedSosItems(data.items || []))
+      // Continue loading remaining parents for modal in background
+      if (allParentsData.total > 1000) {
+        loadRemainingParentsForModal(1000, allParentsData.total)
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
     }
     setLoading(false)
+  }
+  
+  const loadRemainingParentsForModal = async (start: number, total: number) => {
+    const promises = []
+    for (let offset = start; offset < total; offset += 1000) {
+      promises.push(
+        fetch(`/api/products/parents-with-sos-items-lite?page=${Math.floor(offset/1000)}&limit=1000`)
+          .then(res => res.json())
+      )
+    }
+    
+    try {
+      const results = await Promise.all(promises)
+      const additionalParents = results.flatMap(r => r.parents || [])
+      setAllParentsForModal(prev => [...prev, ...additionalParents])
+    } catch (error) {
+      console.error('Error loading additional parents:', error)
+    }
   }
 
   const loadPage = async (page: number) => {
