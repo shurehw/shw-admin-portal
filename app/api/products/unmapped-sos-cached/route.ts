@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getUnmappedSosItems } from '@/lib/cache'
 
-const supabase = createClient(
-  'https://jvzswjyflmgenzxsrlwj.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2enN3anlmbG1nZW56eHNybHdqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTAyNDI3NywiZXhwIjoyMDcwNjAwMjc3fQ.o-WD_2YwWz8cmNRBxqmSJ0lJ1gDh7h6FX21o0HYey8w'
-)
+// Enable edge runtime for better performance
+export const runtime = 'nodejs' // Use 'edge' if all dependencies support it
 
 // Cache the mapped IDs for 5 minutes
 let cachedMappedIds: Set<string> | null = null

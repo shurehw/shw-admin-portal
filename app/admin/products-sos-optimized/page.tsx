@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ChevronDown, ChevronRight, ChevronLeft, Search, Package, Database, Loader2, RefreshCw, Link2, Plus, X } from 'lucide-react'
+import { useDebounce, useDebouncedSearch } from '@/hooks/useDebounce'
+import { linkSosToParent, createParentFromSos, refreshCache } from './actions'
 
 interface SOSItem {
   id: string
@@ -31,6 +33,7 @@ export default function ProductsSOSOptimized() {
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set())
   const [loadingVariants, setLoadingVariants] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 300) // Debounce search for better performance
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeTab, setActiveTab] = useState<'parents' | 'unmapped'>('parents')
@@ -67,7 +70,7 @@ export default function ProductsSOSOptimized() {
       // Fetch everything in parallel for maximum speed
       const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
         fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
-        fetch('/api/products/unmapped-sos-cached?page=0&limit=100'), // Use cached version
+        fetch('/api/products/unmapped-sos-optimized?page=0&limit=100'), // Use optimized version with CDN headers
         fetch('/api/products/parents-with-sos-items-lite?page=0&limit=200') // Preload smaller batch for modal
       ])
       
@@ -140,7 +143,7 @@ export default function ProductsSOSOptimized() {
     
     setLoadingMore(true)
     try {
-      const res = await fetch(`/api/products/unmapped-sos-cached?page=${page}&limit=${pageSize}`)
+      const res = await fetch(`/api/products/unmapped-sos-optimized?page=${page}&limit=${pageSize}`)
       const data = await res.json()
       
       setUnmappedSosItems(data.items || [])
@@ -234,29 +237,29 @@ export default function ProductsSOSOptimized() {
     }
   }
 
-  // Memoized filtered results for better performance
+  // Memoized filtered results for better performance with debounced search
   const filteredParents = useMemo(() => {
-    if (!searchTerm) return parents
-    const term = searchTerm.toLowerCase()
+    if (!debouncedSearchTerm) return parents
+    const term = debouncedSearchTerm.toLowerCase()
     return parents.filter(p => 
       p.name?.toLowerCase().includes(term) ||
       p.category?.toLowerCase().includes(term)
     )
-  }, [parents, searchTerm])
+  }, [parents, debouncedSearchTerm])
 
   const filteredUnmapped = useMemo(() => {
-    if (!searchTerm) return unmappedSosItems
-    const term = searchTerm.toLowerCase()
+    if (!debouncedSearchTerm) return unmappedSosItems
+    const term = debouncedSearchTerm.toLowerCase()
     return unmappedSosItems.filter(item =>
       item.name?.toLowerCase().includes(term) ||
       item.sku?.toLowerCase().includes(term)
     )
-  }, [unmappedSosItems, searchTerm])
+  }, [unmappedSosItems, debouncedSearchTerm])
 
   // Stats
   const parentsShown = parents.length
   const parentsWithSOS = parents.filter(p => p.has_sos_items).length
-  const totalUnmapped = unmappedSosItems.length
+  const unmappedShown = unmappedSosItems.length
 
   if (loading) {
     return (
@@ -303,7 +306,7 @@ export default function ProductsSOSOptimized() {
             </div>
             <div className="bg-amber-50 rounded-lg p-3">
               <div className="text-2xl font-bold text-amber-700">{totalUnmapped}</div>
-              <div className="text-sm text-amber-600">Unmapped</div>
+              <div className="text-sm text-amber-600">Total Unmapped</div>
             </div>
           </div>
           
@@ -320,7 +323,10 @@ export default function ProductsSOSOptimized() {
             </div>
             
             <button
-              onClick={fetchInitialData}
+              onClick={async () => {
+                await refreshCache() // Use server action to invalidate cache
+                await fetchInitialData()
+              }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -777,33 +783,28 @@ export default function ProductsSOSOptimized() {
   async function handleLinkToParent(sosItem: SOSItem, parent: ParentProduct) {
     setMappingLoading(true)
     try {
-      const res = await fetch('/api/products/link-sos-to-parent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sosItemId: sosItem.id,
-          parentId: parent.airtable_id,
-          sosItem: sosItem
-        })
-      })
+      // Use server action for instant cache invalidation
+      const formData = new FormData()
+      formData.append('sosId', sosItem.sos_id)
+      formData.append('parentId', parent.airtable_id)
+      formData.append('sosName', sosItem.name)
       
-      if (res.ok) {
+      const result = await linkSosToParent(formData)
+      
+      if (result.success) {
         // Remove from unmapped list
         setUnmappedSosItems(prev => prev.filter(item => item.id !== sosItem.id))
         setShowParentModal(false)
         setSelectedSosItem(null)
         setParentSearchTerm('')
         // Show success message
-        setSuccessMessage(`Successfully linked "${sosItem.name}" to "${parent.name}"`)
+        setSuccessMessage(result.message || `Successfully linked "${sosItem.name}" to "${parent.name}"`)
         setTimeout(() => setSuccessMessage(''), 5000)
-        // Update unmapped count in stats
-        const newCount = unmappedSosItems.length - 1
         // Refresh to get updated counts
         await fetchInitialData()
       } else {
-        const error = await res.json()
-        console.error('Error linking SOS item:', error)
-        alert(`Failed to link: ${error.error || 'Unknown error'}`)
+        console.error('Error linking SOS item:', result.error)
+        alert(`Failed to link: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error linking SOS item:', error)
@@ -817,30 +818,29 @@ export default function ProductsSOSOptimized() {
     
     setMappingLoading(true)
     try {
-      const res = await fetch('/api/products/create-parent-for-sos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sosItem: selectedSosItem,
-          parentName: newParentForm.name,
-          category: newParentForm.category || 'Uncategorized'
-        })
-      })
+      // Use server action for instant cache invalidation
+      const formData = new FormData()
+      formData.append('sosId', selectedSosItem.sos_id)
+      formData.append('sosName', selectedSosItem.name)
+      formData.append('name', newParentForm.name)
+      formData.append('category', newParentForm.category || 'Uncategorized')
+      formData.append('description', newParentForm.description || '')
       
-      if (res.ok) {
+      const result = await createParentFromSos(formData)
+      
+      if (result.success) {
         // Remove from unmapped list and refresh parents
         setUnmappedSosItems(prev => prev.filter(item => item.id !== selectedSosItem.id))
         setShowCreateModal(false)
         setSelectedSosItem(null)
         setNewParentForm({ name: '', category: '', description: '' })
         // Show success message
-        setSuccessMessage(`Successfully created parent "${newParentForm.name}" with SOS item "${selectedSosItem.name}"`)
+        setSuccessMessage(result.message || `Successfully created parent "${newParentForm.name}" with SOS item "${selectedSosItem.name}"`)
         setTimeout(() => setSuccessMessage(''), 5000)
         await fetchInitialData()
       } else {
-        const error = await res.json()
-        console.error('Error creating parent:', error)
-        alert(`Failed to create parent: ${error.error || 'Unknown error'}`)
+        console.error('Error creating parent:', result.error)
+        alert(`Failed to create parent: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error creating parent:', error)
