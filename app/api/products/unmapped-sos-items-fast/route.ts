@@ -21,13 +21,27 @@ export async function GET() {
         .from('items')
         .select('*', { count: 'exact', head: true })
       
-      // Get items that have SOS IDs in variants (these are mapped)
-      const { data: mappedSosIds } = await supabase
-        .from('airtable_products_variants')
-        .select('sos_id')
-        .not('sos_id', 'is', null)
+      // Get ALL unique SOS IDs that are mapped in variants
+      let allMappedSosIds: string[] = []
+      let variantPage = 0
+      const variantPageSize = 1000
       
-      const mappedIds = new Set(mappedSosIds?.map(v => String(v.sos_id)) || [])
+      while (true) {
+        const { data: variants } = await supabase
+          .from('airtable_products_variants')
+          .select('sos_id')
+          .not('sos_id', 'is', null)
+          .range(variantPage * variantPageSize, (variantPage + 1) * variantPageSize - 1)
+        
+        if (!variants || variants.length === 0) break
+        
+        allMappedSosIds.push(...variants.map(v => String(v.sos_id)))
+        
+        if (variants.length < variantPageSize) break
+        variantPage++
+      }
+      
+      const mappedIds = new Set(allMappedSosIds)
       
       // Get unmapped items (paginated for performance)
       const unmapped: any[] = []
