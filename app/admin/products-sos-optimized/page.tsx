@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ChevronDown, ChevronRight, ChevronLeft, Search, Package, Database, Loader2, RefreshCw, Link2, Plus, X } from 'lucide-react'
 
 interface SOSItem {
@@ -67,7 +67,7 @@ export default function ProductsSOSOptimized() {
       // Fetch everything in parallel for maximum speed
       const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
         fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
-        fetch('/api/products/unmapped-sos-count?page=0&limit=100'),
+        fetch('/api/products/unmapped-sos-cached?page=0&limit=100'), // Use cached version
         fetch('/api/products/parents-with-sos-items-lite?page=0&limit=200') // Preload smaller batch for modal
       ])
       
@@ -140,7 +140,7 @@ export default function ProductsSOSOptimized() {
     
     setLoadingMore(true)
     try {
-      const res = await fetch(`/api/products/unmapped-sos-count?page=${page}&limit=${pageSize}`)
+      const res = await fetch(`/api/products/unmapped-sos-cached?page=${page}&limit=${pageSize}`)
       const data = await res.json()
       
       setUnmappedSosItems(data.items || [])
@@ -234,15 +234,24 @@ export default function ProductsSOSOptimized() {
     }
   }
 
-  const filteredParents = parents.filter(p => 
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Memoized filtered results for better performance
+  const filteredParents = useMemo(() => {
+    if (!searchTerm) return parents
+    const term = searchTerm.toLowerCase()
+    return parents.filter(p => 
+      p.name?.toLowerCase().includes(term) ||
+      p.category?.toLowerCase().includes(term)
+    )
+  }, [parents, searchTerm])
 
-  const filteredUnmapped = unmappedSosItems.filter(item =>
-    item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredUnmapped = useMemo(() => {
+    if (!searchTerm) return unmappedSosItems
+    const term = searchTerm.toLowerCase()
+    return unmappedSosItems.filter(item =>
+      item.name?.toLowerCase().includes(term) ||
+      item.sku?.toLowerCase().includes(term)
+    )
+  }, [unmappedSosItems, searchTerm])
 
   // Stats
   const parentsShown = parents.length
