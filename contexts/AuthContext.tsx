@@ -52,7 +52,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const supabase = getSupabaseBrowser();
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
       if (session?.user) {
         await fetchUserProfile(session.user.id);
       } else {
@@ -70,10 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const supabase = getSupabaseBrowser();
       const { data: { session }, error } = await supabase.auth.getSession();
-      console.log('Checking user session:', session?.user?.email, error);
       
       if (error) {
-        console.error('Session error:', error);
         // Try to refresh the session
         const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
         if (refreshedSession?.user) {
@@ -92,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function fetchUserProfile(userId: string) {
     try {
       const supabase = getSupabaseBrowser();
-      console.log('Fetching user profile for userId:', userId);
       
       // Get the current user's email
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -102,7 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const roleResponse = await fetch(`/api/auth/check-role?userId=${userId}&email=${userEmail}`);
         const roleData = await roleResponse.json();
-        console.log('Role check response:', roleData);
         
         if (roleData.profile) {
           // Use the profile from our API which ensures role is set
@@ -119,11 +114,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: profile.created_at,
             last_sign_in_at: new Date().toISOString(),
           });
-          console.log('User set with role:', profile.role || 'admin');
           return;
         }
       } catch (apiError) {
-        console.error('Role API error, falling back to direct query:', apiError);
+        // Silent fallback to direct query
       }
       
       // Fallback to direct Supabase query
