@@ -26,7 +26,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Get user role and permissions - with proper fallback
   const userRole = user?.role || 'admin';
-  console.log('User role in AdminLayout:', userRole, 'User:', user);
   
   // Define navigation based on user role
   const getNavigation = () => {
@@ -64,7 +63,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     
     // If user role is not set, show all navigation for admin
     if (!user?.role) {
-      console.log('No user role found, defaulting to admin navigation');
       return allNav;
     }
     
