@@ -51,8 +51,11 @@ export default function ProductsSOSOptimized() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(0)
   const [totalParents, setTotalParents] = useState(0)
+  const [unmappedPage, setUnmappedPage] = useState(0)
+  const [totalUnmapped, setTotalUnmapped] = useState(0)
   const pageSize = 100
   const totalPages = Math.ceil(totalParents / pageSize)
+  const unmappedTotalPages = Math.ceil(totalUnmapped / pageSize)
 
   useEffect(() => {
     fetchInitialData()
@@ -64,7 +67,7 @@ export default function ProductsSOSOptimized() {
       // Fetch everything in parallel for maximum speed
       const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
         fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
-        fetch('/api/products/unmapped-sos-count'),
+        fetch('/api/products/unmapped-sos-count?page=0&limit=100'),
         fetch('/api/products/parents-with-sos-items-lite?page=0&limit=200') // Preload smaller batch for modal
       ])
       
@@ -78,6 +81,8 @@ export default function ProductsSOSOptimized() {
       setTotalParents(parentsData.total || 0)
       setCurrentPage(0)
       setUnmappedSosItems(unmappedData.items || [])
+      setTotalUnmapped(unmappedData.total || 0)
+      setUnmappedPage(0)
       setAllParentsForModal(allParentsData.parents || [])
       
       // Continue loading remaining parents for modal in background
@@ -126,6 +131,25 @@ export default function ProductsSOSOptimized() {
       }
     } catch (error) {
       console.error('Error loading page:', error)
+    }
+    setLoadingMore(false)
+  }
+
+  const loadUnmappedPage = async (page: number) => {
+    if (page < 0 || (unmappedTotalPages > 0 && page >= unmappedTotalPages)) return
+    
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/products/unmapped-sos-count?page=${page}&limit=${pageSize}`)
+      const data = await res.json()
+      
+      setUnmappedSosItems(data.items || [])
+      setUnmappedPage(page)
+      if (data.total) {
+        setTotalUnmapped(data.total)
+      }
+    } catch (error) {
+      console.error('Error loading unmapped page:', error)
     }
     setLoadingMore(false)
   }
@@ -462,8 +486,18 @@ export default function ProductsSOSOptimized() {
           {/* Unmapped Tab */}
           {activeTab === 'unmapped' && (
             <div className="p-6">
+              {/* Unmapped Items Stats */}
+              <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="text-sm text-yellow-800">
+                  Showing {unmappedSosItems.length} of {totalUnmapped} unmapped SOS items
+                  {totalUnmapped > 100 && (
+                    <span className="ml-2">(Page {unmappedPage + 1} of {unmappedTotalPages})</span>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-4">
-                {filteredUnmapped.slice(0, 100).map((item) => (
+                {filteredUnmapped.map((item) => (
                   <div key={item.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -506,9 +540,31 @@ export default function ProductsSOSOptimized() {
                     </div>
                   </div>
                 ))}
-                {filteredUnmapped.length > 100 && (
-                  <div className="text-center text-gray-500">
-                    Showing first 100 of {filteredUnmapped.length} unmapped items
+                
+                {/* Pagination Controls for Unmapped */}
+                {unmappedTotalPages > 1 && (
+                  <div className="flex items-center justify-center space-x-4 py-6 border-t">
+                    <button
+                      onClick={() => loadUnmappedPage(unmappedPage - 1)}
+                      disabled={unmappedPage === 0 || loadingMore}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </button>
+                    
+                    <div className="text-sm text-gray-600">
+                      Page {unmappedPage + 1} of {unmappedTotalPages}
+                    </div>
+                    
+                    <button
+                      onClick={() => loadUnmappedPage(unmappedPage + 1)}
+                      disabled={unmappedPage >= unmappedTotalPages - 1 || loadingMore}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </button>
                   </div>
                 )}
               </div>
