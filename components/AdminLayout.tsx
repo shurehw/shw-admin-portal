@@ -22,10 +22,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const { user, signOut, refreshProfile } = useAuth();
+  const { user, signOut, refreshProfile, loading } = useAuth();
 
-  // Get user role and permissions - with proper fallback
-  const userRole = user?.role || 'admin';
+  // Get user role - NO DEFAULT TO ADMIN
+  const userRole = user?.role;
   
   // Define navigation based on user role
   const getNavigation = () => {
@@ -61,9 +61,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     
     const allNav = [...baseNav, ...adminOnlyNav, ...salesNav, ...productionNav, ...adminNav];
     
-    // If user role is not set, show all navigation for admin
-    if (!user?.role) {
-      return allNav;
+    // Only show navigation for authenticated users with roles
+    if (!userRole) {
+      return []; // Return empty nav if no role
     }
     
     return allNav.filter(item => item.roles.includes(userRole));
@@ -77,6 +77,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const handleSignOut = async () => {
     signOut();
   };
+
+  // Show loading state while auth is being checked
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    router.push('/admin/login');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -142,7 +160,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   </div>
                   <div className="hidden md:block text-left">
                     <p className="font-medium text-gray-900">{userName}</p>
-                    <p className="text-xs text-gray-500 capitalize">{userRole.replace('_', ' ')}</p>
+                    <p className="text-xs text-gray-500 capitalize">{userRole ? userRole.replace('_', ' ') : 'Loading...'}</p>
                   </div>
                   <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
                 </button>
