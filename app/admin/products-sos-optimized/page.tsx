@@ -65,7 +65,7 @@ export default function ProductsSOSOptimized() {
       const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
         fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
         fetch('/api/products/unmapped-sos-count'),
-        fetch('/api/products/parents-with-sos-items-lite?page=0&limit=1000') // Preload for modal
+        fetch('/api/products/parents-with-sos-items-lite?page=0&limit=200') // Preload smaller batch for modal
       ])
       
       const [parentsData, unmappedData, allParentsData] = await Promise.all([
@@ -81,8 +81,8 @@ export default function ProductsSOSOptimized() {
       setAllParentsForModal(allParentsData.parents || [])
       
       // Continue loading remaining parents for modal in background
-      if (allParentsData.total > 1000) {
-        loadRemainingParentsForModal(1000, allParentsData.total)
+      if (allParentsData.total > 200) {
+        loadRemainingParentsForModal(200, allParentsData.total)
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -92,9 +92,10 @@ export default function ProductsSOSOptimized() {
   
   const loadRemainingParentsForModal = async (start: number, total: number) => {
     const promises = []
-    for (let offset = start; offset < total; offset += 1000) {
+    const batchSize = 200 // Smaller batches to avoid timeouts
+    for (let offset = start; offset < total; offset += batchSize) {
       promises.push(
-        fetch(`/api/products/parents-with-sos-items-lite?page=${Math.floor(offset/1000)}&limit=1000`)
+        fetch(`/api/products/parents-with-sos-items-lite?page=${Math.floor(offset/100)}&limit=${batchSize}`)
           .then(res => res.json())
       )
     }
@@ -172,11 +173,12 @@ export default function ProductsSOSOptimized() {
     
     setLoadingModalParents(true)
     try {
-      // Load all pages in parallel for faster loading
-      const firstRes = await fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=1000`)
+      // Load all pages in smaller batches to avoid timeouts
+      const batchSize = 200
+      const firstRes = await fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${batchSize}`)
       const firstData = await firstRes.json()
       const total = firstData.total || 0
-      const totalPages = Math.ceil(total / 1000)
+      const totalPages = Math.ceil(total / batchSize)
       
       // Set first batch immediately
       setAllParentsForModal(firstData.parents || [])
@@ -186,7 +188,7 @@ export default function ProductsSOSOptimized() {
         const promises = []
         for (let page = 1; page < totalPages; page++) {
           promises.push(
-            fetch(`/api/products/parents-with-sos-items-lite?page=${page}&limit=1000`)
+            fetch(`/api/products/parents-with-sos-items-lite?page=${page}&limit=${batchSize}`)
               .then(res => res.json())
           )
         }
