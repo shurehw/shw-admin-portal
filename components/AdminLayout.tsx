@@ -44,8 +44,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       { name: 'Support Center', href: '/admin/support/tickets', icon: LifeBuoy, roles: ['admin', 'customer_service'] },
       { name: 'Orders', href: '/admin/orders', icon: Truck, roles: ['admin', 'sales_rep', 'customer_service'] },
       { name: 'Products & Inventory', href: '/admin/products', icon: Package, roles: ['admin', 'sales_rep', 'customer_service'] },
-      // Special item only for jacob@shurehw.com
-      ...(email === 'jacob@shurehw.com' ? [
+      // Special item only for jacob@shurehw.com and admin@shurehw.com
+      ...((email === 'jacob@shurehw.com' || email === 'admin@shurehw.com') ? [
         { name: 'Products-SOS Manager', href: '/admin/products-sos-optimized', icon: Package, roles: ['admin'] }
       ] : []),
       { name: 'Custom Catalog', href: '/admin/custom-catalog', icon: Package, roles: ['admin', 'sales_rep'] },
