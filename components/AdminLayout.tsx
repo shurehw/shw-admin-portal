@@ -74,14 +74,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return allNav.filter(item => item.roles.includes(userRole));
   };
 
+  const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
+  
   const navigation = getNavigation(userEmail);
 
   const handleSignOut = async () => {
     signOut();
   };
-
-  const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
-  const userEmail = user?.email || '';
 
   return (
     <div className="min-h-screen bg-gray-100">
