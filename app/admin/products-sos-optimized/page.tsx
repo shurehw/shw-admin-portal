@@ -64,7 +64,7 @@ export default function ProductsSOSOptimized() {
       // Fetch everything in parallel for maximum speed
       const [parentsRes, unmappedRes, allParentsRes] = await Promise.all([
         fetch(`/api/products/parents-with-sos-items-lite?page=0&limit=${pageSize}`),
-        fetch('/api/products/unmapped-sos-items'),
+        fetch('/api/products/unmapped-sos-items-fast'),
         fetch('/api/products/parents-with-sos-items-lite?page=0&limit=1000') // Preload for modal
       ])
       
