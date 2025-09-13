@@ -7,9 +7,16 @@ const globalForSupabase = globalThis as unknown as {
 
 export function getSupabaseBrowser() {
   if (!globalForSupabase.supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !key) {
+      throw new Error('Missing Supabase environment variables')
+    }
+    
     globalForSupabase.supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      url,
+      key,
       {
         auth: {
           persistSession: true,
